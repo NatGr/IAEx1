@@ -30,10 +30,20 @@ public class ReactiveAgent implements ReactiveBehavior {
 		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
 
 		this.random = new Random();
+		
 		this.myAgent = agent;
+		
 		numActions = 0;
+		
+		/*A state consists of two properties
+		 * 1. The current city
+		 * 2. The destination of the packet that is present in the current city*/
 		stateMap = new BiHashMap<String, Integer>();
+		
+		//Counter to put states in hashmap
 		int stateId = 0;
+		
+		/*Initialize the hashmap with all possible states*/
 		for (City city : topology) {
 			stateMap.put(getStateString(city.id, -1), stateId++); // we have no task
 			for (City dest : topology) {
@@ -43,6 +53,14 @@ public class ReactiveAgent implements ReactiveBehavior {
 			}
 		}
 		
+		
+		/*Q-function takes state and action as arguments (2nd and 3rd dimension)
+		 * Every vehicle has different characteristics (like gasprice or speed) so different optimizations are needed for each vehicle
+		 * 1. First dimension are all the vehicles
+		 * 2. Second dimension are all the possible states
+		 * 3. Third dimension are the possible actions
+		 * 		3.1 not picking up (possibly present) package and moving to a neighbouring city
+		 * 		3.2 taking up the package and then the system will take over and deliver it along the shortest route*/
 		QTable = new double[agent.vehicles().size()][stateId][topology.size() + 1]; // every cell is implicitely set to 0.0
 		// actions: [take package, go to city 0, go to city 1, ...]
 		double[] stateValues = new double[stateId];
@@ -51,23 +69,23 @@ public class ReactiveAgent implements ReactiveBehavior {
 		for (int i = 0; i < agent.vehicles().size(); i++) {
 			Arrays.fill(stateValues, 0.0);  // reset the states Values to 0
 			Vehicle vehicule = agent.vehicles().get(i);
-			for (double maxDiff = 0.0; maxDiff < 1e-7;) {
-				for (int state = 0; state < QTable.length; state++) {
-					int[] fromAndTo = getStateIds(stateMap.getKey(state));
+			for (double maxDiff = 0.0; maxDiff < 1e-7;) { //TODO: why no while-loop???
+				for (int state = 0; state < QTable.length; state++) { //TODO: Doesn't this have to be QTable[0].length
+					int[] fromAndTo = getStateIds(stateMap.getKey(state)); //Array of 2 elements consisting of both ID's
 					City from = (topology.cities()).get(fromAndTo[0]);
 					double best = -Double.MAX_VALUE;
-					if (fromAndTo[1] != -1.0) {
+					if (fromAndTo[1] != -1.0) { 
 						City to = (topology.cities()).get(fromAndTo[1]);
 						QTable[i][state][0] = td.reward(from, to) - from.distanceTo(to)*vehicule.costPerKm()
-								+ discount*getFutureReward(to, topology, td, stateValues);
-						best = Math.max(best, QTable[i][state][0]);
+								+ discount*getFutureReward(to, topology, td, stateValues); //Calculate reward for delivering task
+						best = Math.max(best, QTable[i][state][0]); //best can be update on each action
 					}
-					for(City neighbourg : from) {
+					for(City neighbourg : from) { //TODO: "from" exists of one city. Why is this a loop? Doesn't this has to be from.neighbours()?
 						QTable[i][state][neighbourg.id + 1] = -from.distanceTo(neighbourg)*vehicule.costPerKm()
-								+ discount*getFutureReward(neighbourg, topology, td, stateValues);
+								+ discount*getFutureReward(neighbourg, topology, td, stateValues); //Calculate reward for moving to other city
 						best = Math.max(best, QTable[i][state][neighbourg.id + 1]);
 					}
-					maxDiff = Math.max(maxDiff, Math.abs(stateValues[state] - best));
+					maxDiff = Math.max(maxDiff, Math.abs(stateValues[state] - best)); //TODO: Shoudln't you calculate difference of arrays? Now you only take difference for last state
 					stateValues[state] = best;
 				}
 			}
@@ -144,7 +162,8 @@ public class ReactiveAgent implements ReactiveBehavior {
 				reward += probability*stateValues[stateMap.get(getStateString(city.id, to.id))];
 			}
 		}
-		reward += (1.0 - cum_proba)*stateValues[stateMap.get(getStateString(city.id, -1))];
+		reward += (1.0 - cum_proba)*stateValues[stateMap.get(getStateString(city.id, -1))]; //TODO: Isn't there a separate probability of not having a task?
+		
 		return reward;
 	}
 }
