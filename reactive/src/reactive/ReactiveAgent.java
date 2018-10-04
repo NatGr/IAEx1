@@ -69,8 +69,9 @@ public class ReactiveAgent implements ReactiveBehavior {
 		for (int i = 0; i < agent.vehicles().size(); i++) {
 			Arrays.fill(stateValues, 0.0);  // reset the states Values to 0
 			Vehicle vehicule = agent.vehicles().get(i);
-			for (double maxDiff = 0.0; maxDiff < 1e-7;) { //TODO: why no while-loop???
-				for (int state = 0; state < QTable.length; state++) { //TODO: Doesn't this have to be QTable[0].length
+			for (double maxDiff = 1.0; maxDiff > 1e-7;) { //TODO: why no while-loop???
+				maxDiff = 0.0;
+				for (int state = 0; state < QTable[0].length; state++) { //TODO: Doesn't this have to be QTable[0].length
 					int[] fromAndTo = getStateIds(stateMap.getKey(state)); //Array of 2 elements consisting of both ID's
 					City from = (topology.cities()).get(fromAndTo[0]);
 					double best = -Double.MAX_VALUE;
@@ -153,7 +154,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 	}
 	
 	// computes the future reward associated with going to a city
-	double getFutureReward(City city, Topology topology, TaskDistribution td, double[] stateValues) {
+	private double getFutureReward(City city, Topology topology, TaskDistribution td, double[] stateValues) {
 		double reward = 0.0, probability = 0.0, cum_proba = 0.0;
 		for(City to: topology) {
 			probability = td.probability(city, to);
@@ -162,8 +163,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 				reward += probability*stateValues[stateMap.get(getStateString(city.id, to.id))];
 			}
 		}
-		reward += (1.0 - cum_proba)*stateValues[stateMap.get(getStateString(city.id, -1))]; //TODO: Isn't there a separate probability of not having a task?
-		
+		reward += (1.0 - cum_proba)*stateValues[stateMap.get(getStateString(city.id, -1))];
 		return reward;
 	}
 }
