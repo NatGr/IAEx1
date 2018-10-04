@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<history configuration="config/reactive.xml">
+<history configuration="config\reactive.xml">
 	<agents>
 		<agent name="reactive-rla">
 			<vehicle name="Vehicle 1"/>
+			<vehicle name="Vehicle 2"/>
+			<vehicle name="Vehicle 3"/>

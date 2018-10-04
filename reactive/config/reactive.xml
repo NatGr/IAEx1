@@ -38,6 +38,20 @@
 				<set capacity="30" />
 				<set cost-per-km="5" />
 			</vehicle>
+			<vehicle name="Vehicle 2">
+				<set color="#00ff00" />
+				<set home="Paris" />
+				<set speed="220" />
+				<set capacity="30" />
+				<set cost-per-km="5" />
+			</vehicle>
+			<vehicle name="Vehicle 3">
+				<set color="#ff0000" />
+				<set home="Lyon" />
+				<set speed="220" />
+				<set capacity="60" />
+				<set cost-per-km="25" />
+			</vehicle>
 		</company>
 		
 		<company name="Company B">
