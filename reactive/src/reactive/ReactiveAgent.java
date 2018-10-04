@@ -35,15 +35,15 @@ public class ReactiveAgent implements ReactiveBehavior {
 
 		numActions = 0;
 
-		/*
-		 * A state consists of two properties 1. The current city 2. The destination of
-		 * the packet that is present in the current city
-		 */
+		
+		/* A state consists of two properties
+		 * 1. The current city
+		 * 2. The destination of the packet that is present in the current city */
 		stateMap = new BiHashMap<String, Integer>();
-
+		
 		// Counter to put states in hashmap
 		int stateId = 0;
-
+		
 		/* Initialize the hashmap with all possible states */
 		for (City city : topology) {
 			stateMap.put(getStateString(city.id, -1), stateId++); // we have no task
@@ -54,51 +54,43 @@ public class ReactiveAgent implements ReactiveBehavior {
 			}
 		}
 
-		/*
-		 * Q-function takes state and action as arguments (2nd and 3rd dimension) Every
-		 * vehicle has different characteristics (like gasprice or speed) so different
-		 * optimizations are needed for each vehicle 1. First dimension are all the
-		 * vehicles 2. Second dimension are all the possible states 3. Third dimension
-		 * are the possible actions 3.1 not picking up (possibly present) package and
-		 * moving to a neighbouring city 3.2 taking up the package and then the system
-		 * will take over and deliver it along the shortest route
-		 */
-		QTable = new double[agent.vehicles().size()][stateId][topology.size() + 1]; // every cell is implicitely set to
-																					// 0.0
+		
+		/* Q-function takes state and action as arguments (2nd and 3rd dimension)
+		 * Every vehicle has different characteristics (like gasprice or capacity) so different optimizations are needed for each vehicle
+		 * 1. First dimension is all the vehicles
+		 * 2. Second dimension is all the possible states
+		 * 3. Third dimension is the possible actions
+		 * 		3.1 not picking up (possibly present) package and moving to a neighbouring city
+		 * 		3.2 taking up the package and then the system will take over and deliver it along the shortest route*/
+		QTable = new double[agent.vehicles().size()][stateId][topology.size() + 1]; // every cell is implicitely set to 0.0
 		// actions: [take package, go to city 0, go to city 1, ...]
 		double[] stateValues = new double[stateId];
 
 		// Value Iteration
 		for (int i = 0; i < agent.vehicles().size(); i++) {
-			Arrays.fill(stateValues, 0.0); // reset the states Values to 0
-			Vehicle vehicule = agent.vehicles().get(i);
-			for (double maxDiff = 1.0; maxDiff > 1e-7;) { // TODO: why no while-loop???
+			Arrays.fill(stateValues, 0.0);  // reset the states Values to 0
+			Vehicle vehicle = agent.vehicles().get(i);
+			for (double maxDiff = 1.0; maxDiff > 1e-7;) {
 				maxDiff = 0.0;
-				for (int state = 0; state < QTable[0].length; state++) { // TODO: Doesn't this have to be
-																			// QTable[0].length
-					int[] fromAndTo = getStateIds(stateMap.getKey(state)); // Array of 2 elements consisting of both
-																			// ID's
+				for (int state = 0; state < QTable[0].length; state++) {
+					int[] fromAndTo = getStateIds(stateMap.getKey(state)); // Array of 2 elements consisting of both ID's
 					City from = (topology.cities()).get(fromAndTo[0]);
 					double best = -Double.MAX_VALUE;
 					if (fromAndTo[1] != -1.0) {
 						City to = (topology.cities()).get(fromAndTo[1]);
-						QTable[i][state][0] = td.reward(from, to) - from.distanceTo(to) * vehicule.costPerKm()
-								+ discount * getFutureReward(to, topology, td, stateValues); // Calculate reward for
-																								// delivering task
-						best = Math.max(best, QTable[i][state][0]); // best can be update on each action
+
+						if (vehicle.capacity() >= td.weight(from, to)) {
+							QTable[i][state][0] = td.reward(from, to) - from.distanceTo(to)*vehicle.costPerKm()
+									+ discount*getFutureReward(to, topology, td, stateValues); // Compute reward for delivering task
+							best = Math.max(best, QTable[i][state][0]); // best can be updated on each action
+						}
 					}
-					for (City neighbourg : from) { // TODO: "from" exists of one city. Why is this a loop? Doesn't this
-													// has to be from.neighbours()?
-						QTable[i][state][neighbourg.id + 1] = -from.distanceTo(neighbourg) * vehicule.costPerKm()
-								+ discount * getFutureReward(neighbourg, topology, td, stateValues); // Calculate reward
-																										// for moving to
-																										// other city
+					for(City neighbourg : from) {
+						QTable[i][state][neighbourg.id + 1] = -from.distanceTo(neighbourg)*vehicle.costPerKm()
+								+ discount*getFutureReward(neighbourg, topology, td, stateValues); // Compute reward for moving to other city
 						best = Math.max(best, QTable[i][state][neighbourg.id + 1]);
 					}
-					maxDiff = Math.max(maxDiff, Math.abs(stateValues[state] - best)); // TODO: Shoudln't you calculate
-																						// difference of arrays? Now you
-																						// only take difference for last
-																						// state
+					maxDiff = Math.max(maxDiff, Math.abs(stateValues[state] - best));
 					stateValues[state] = best;
 				}
 			}
@@ -121,7 +113,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 
 		int maxOffset = -1;
 		double max = -Double.MAX_VALUE;
-		if (availableTask != null) {
+		if (availableTask != null && vehicle.capacity() >= availableTask.weight) {
 			maxOffset = 0;
 			max = QTable[vehicle.id()][state_id][0];
 		}
