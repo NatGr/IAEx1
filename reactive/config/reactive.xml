@@ -7,7 +7,7 @@
 	<settings import="config/settings_default.xml" />	
 	
 	<!-- load the topology-->
-	<topology import="config/topology/france.xml" />
+	<topology import="config/topology/France.xml" />
 	
 	<!-- load agents -->
 	<agents import="config/agents.xml" />
@@ -19,6 +19,10 @@
 		-->
 		<probability distribution="uniform" min="0.0" max="1.0" />
 		<reward distribution="constant" policy="short-distances" min="1000" max="99999" />
+		<!--
+		<weight distribution="uniform" min="0" max="100" />
+		-->
+		
 		<weight distribution="constant" value="3" />
 		
 		<!--
@@ -37,20 +41,6 @@
 				<set speed="220" />
 				<set capacity="30" />
 				<set cost-per-km="5" />
-			</vehicle>
-			<vehicle name="Vehicle 2">
-				<set color="#00ff00" />
-				<set home="Paris" />
-				<set speed="220" />
-				<set capacity="30" />
-				<set cost-per-km="5" />
-			</vehicle>
-			<vehicle name="Vehicle 3">
-				<set color="#ff0000" />
-				<set home="Lyon" />
-				<set speed="220" />
-				<set capacity="60" />
-				<set cost-per-km="25" />
 			</vehicle>
 		</company>
 		
@@ -93,7 +83,7 @@
 				<set color="#ff00ff" />
 				<set home="Strasbourg" />
 				<set speed="220" />
-				<set capacity="80" />
+				<set capacity="30" />
 				<set cost-per-km="5" />
 			</vehicle>
 		</company>
@@ -104,7 +94,7 @@
 				<set color="#00ffff" />
 				<set home="Bordeaux" />
 				<set speed="220" />
-				<set capacity="80" />
+				<set capacity="30" />
 				<set cost-per-km="5" />
 			</vehicle>
 		</company>

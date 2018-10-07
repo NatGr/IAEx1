@@ -13,6 +13,8 @@ import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
+import uchicago.src.sim.analysis.DataSource;
+import uchicago.src.sim.analysis.Sequence;
 
 public class ReactiveAgent implements ReactiveBehavior {
 
@@ -21,13 +23,15 @@ public class ReactiveAgent implements ReactiveBehavior {
 	private int numActions;
 	private BiHashMap<String, Integer> stateMap;
 	private double[][][] QTable;
-
+	private double discount;
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
-		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
+		discount = agent.readProperty("discount-factor", Double.class, 0.95);
+		System.out.println(discount);
 
 		this.random = new Random();
 
@@ -76,7 +80,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 					int[] fromAndTo = getStateIds(stateMap.getKey(state)); // Array of 2 elements consisting of both ID's
 					City from = (topology.cities()).get(fromAndTo[0]);
 					double best = -Double.MAX_VALUE;
-					if (fromAndTo[1] != -1.0) {
+					if (fromAndTo[1] != -1.0) { //there is a package present
 						City to = (topology.cities()).get(fromAndTo[1]);
 
 						if (vehicle.capacity() >= td.weight(from, to)) {
@@ -96,7 +100,9 @@ public class ReactiveAgent implements ReactiveBehavior {
 			}
 		}
 		System.out.println("setup");
-		System.out.println(diffAgents(QTable[2], QTable[1]));
+		printQ(QTable[0]);
+		System.out.println("\n\n\n\n\n\n\n");
+		//System.out.println(diffAgents(QTable[2], QTable[1]));
 	}
 
 	@Override
@@ -136,7 +142,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 		}
 
 		if (numActions >= 1) {
-			System.out.println("The total profit after " + numActions + " actions is " + myAgent.getTotalProfit()
+			System.out.println("Agent Reactive ("+ discount+"): The total profit after " + numActions + " actions is " + myAgent.getTotalProfit()
 					+ " (average profit: " + (myAgent.getTotalProfit() / (double) numActions) + ")");
 		}
 		numActions++;
@@ -193,5 +199,17 @@ public class ReactiveAgent implements ReactiveBehavior {
 		    System.out.println();
 		}
 		return result;
+	}
+	
+	private void printQ(double[][] q) {
+		int rows = q.length; 
+		int columns = q[0].length;
+		System.out.println("Rows: "+rows+", columns: "+columns);
+		for (int i = 0; i < q.length; i++) {
+		    for (int j = 0; j < q[i].length; j++) {
+		        System.out.print(q[i][j] + "\t");
+		    }
+		    System.out.println();
+		}
 	}
 }

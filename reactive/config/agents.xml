@@ -7,7 +7,78 @@
 	<agent name="reactive-rla">
 		<set class-path="bin/"/>
 		<set class-name="reactive.ReactiveAgent"/>
-		<set discount-factor=".85"/>
+		<set discount-factor=".5"/>
+	</agent>
+	<agent name="reactive-template">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveTemplate"/>
+		<set discount-factor=".5"/>
+	</agent>
+	<agent name="reactive-dummy">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveDummy"/>
+		<set discount-factor=".5"/>
+	</agent>
+	<agent name="reactive-hist00">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".00"/>
+	</agent>
+	<agent name="reactive-hist05">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".05"/>
+	</agent>
+	<agent name="reactive-hist10">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".10"/>
+	</agent>
+	<agent name="reactive-hist15">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".15"/>
+	</agent>
+	<agent name="reactive-hist20">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".20"/>
+	</agent>
+	<agent name="reactive-hist25">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".25"/>
+	</agent>
+	<agent name="reactive-hist30">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".30"/>
+	</agent>
+	<agent name="reactive-hist40">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".40"/>
+	</agent>
+	<agent name="reactive-hist50">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".50"/>
+	</agent>
+	<agent name="reactive-hist60">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".60"/>
+	</agent>
+	
+	<agent name="reactive-hist80">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".80"/>
+	</agent>
+	<agent name="reactive-hist99">
+		<set class-path="bin/"/>
+		<set class-name="reactive.ReactiveAgent"/>
+		<set discount-factor=".99"/>
 	</agent>
 	
 </agents>
