@@ -207,7 +207,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 		System.out.println("Rows: "+rows+", columns: "+columns);
 		for (int i = 0; i < q.length; i++) {
 		    for (int j = 0; j < q[i].length; j++) {
-		        System.out.print(q[i][j] + "\t");
+		        System.out.print(((int) q[i][j]) + "\t");
 		    }
 		    System.out.println();
 		}
