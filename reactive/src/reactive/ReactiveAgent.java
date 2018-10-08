@@ -28,8 +28,11 @@ public class ReactiveAgent implements ReactiveBehavior {
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
 		discount = agent.readProperty("discount-factor", Double.class, 0.95);
+
 		this.myAgent = agent;
+
 		numActions = 0;
+
 		
 		/* A state consists of two properties
 		 * 1. The current city
@@ -236,21 +239,11 @@ public class ReactiveAgent implements ReactiveBehavior {
 		int columns = q[0].length;
 		System.out.println("Qtable:");
 		System.out.println("Rows: "+rows+", columns: "+columns);
-		int not_greedy_count = 0;
-		int choice_count = 0;
 		for (int i = 0; i < q.length; i++) {
-		     if (q[i][0] != 0.0) {
-		    	 double max = q[i][0];
-		    	 boolean print = true;
-		    	 for (int j = 1; j < q[i].length; j++) {
-		    		 if (q[i][j] > max) {
-		    			 not_greedy_count++;
-		    			 break;
-		    		 }
-		    	 }
-		    	 choice_count++;
-		     }
+		    for (int j = 0; j < q[i].length; j++) {
+		        System.out.print(((int) q[i][j]) + "\t");
+		    }
+		    System.out.println();
 		}
-		System.out.println( not_greedy_count + " " + choice_count);
 	}
 }
