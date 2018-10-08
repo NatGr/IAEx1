@@ -46,7 +46,7 @@
 			<!-- the second vehicle (red) -->
 			<vehicle name="Vehicle 2">
 				<set color="#ff0000" />
-				<set home="Eindhoven" />
+				<set home="Amsterdam" />
 				<set speed="90" />
 				<set capacity="80" />
 				<set cost-per-km="5" />

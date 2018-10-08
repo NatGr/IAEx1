@@ -1,14 +1,11 @@
 package reactive;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 
-import javafx.util.Pair;
 import logist.simulation.Vehicle;
 import logist.agent.Agent;
 import logist.behavior.ReactiveBehavior;
@@ -33,7 +30,6 @@ public class ReactiveDummy implements ReactiveBehavior {
 
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
-		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
 		// Compute value to attach to each city based on the reward you can earn by leaving the city
 		Vehicle vehicle = agent.vehicles().get(0); // we only do it for one vehicle here
 		for (City c1: topology) {
@@ -73,8 +69,7 @@ public class ReactiveDummy implements ReactiveBehavior {
 			for (City c:city_ranking) {
 				if (currentCity.hasNeighbor(c)) { //Go to best neighbour, unregarding the distance to it
 					action = new Move(c);
-					numActions++;
-					return action;
+					break;
 				}
 			}		
 		} else {
@@ -83,6 +78,9 @@ public class ReactiveDummy implements ReactiveBehavior {
 				if (currentCity.hasNeighbor(c) && (expected_rewards.get(c)) > availableTask.reward + expected_rewards.get(destination)) { 
 					// See if there is a better neighbour but take into account the distance
 					action = new Move(c);
+					if (numActions >= 1) {
+						System.out.println("Agent Dummmy: The total profit after "+numActions+" actions is "+myAgent.getTotalProfit()+" (average profit: "+(myAgent.getTotalProfit() / (double)numActions)+")");
+					}
 					numActions++;
 					return action;
 				}
