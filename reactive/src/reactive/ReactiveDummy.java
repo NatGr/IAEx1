@@ -75,7 +75,7 @@ public class ReactiveDummy implements ReactiveBehavior {
 		} else {
 			City destination = availableTask.deliveryCity;
 			for (City c: city_ranking) {
-				if (currentCity.hasNeighbor(c) && (expected_rewards.get(c)) > availableTask.reward + expected_rewards.get(destination)) { 
+				if (currentCity.hasNeighbor(c) && (expected_rewards.get(c)) > availableTask.reward ) { 
 					// See if there is a better neighbour but take into account the distance
 					action = new Move(c);
 					if (numActions >= 1) {
