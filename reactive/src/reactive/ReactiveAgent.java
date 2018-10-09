@@ -28,9 +28,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
 		discount = agent.readProperty("discount-factor", Double.class, 0.95);
-
 		this.myAgent = agent;
-
 		numActions = 0;
 
 		
@@ -54,6 +52,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 		long deltaTime = System.nanoTime();
 		basicValueIteration(topology, td, agent, stateId);
 		// alternativeValueIteration(topology, td, agent, stateId);
+		// basicValueIterationV2(topology, td, agent, stateId);
 		deltaTime = System.nanoTime() - deltaTime;
 		System.out.println("Time elapsed (ms): " + (deltaTime/1000000));
 		System.out.println("\n\n\n\n\n\n\n");
@@ -156,6 +155,63 @@ public class ReactiveAgent implements ReactiveBehavior {
 			}
 		}
 	}
+	
+	// basic value iteration algorithm, without computing long term update more than twice see report
+		private void basicValueIterationV2(Topology topology, TaskDistribution td, Agent agent, int nbrStates) {
+			QTable = new double[agent.vehicles().size()][nbrStates][topology.size() + 1]; // every cell is implicitely set to 0.0
+			// actions: [take package, go to city 0, go to city 1, ...]
+			double[] stateValues = new double[nbrStates];
+			double[] comingToCityValues = new double[topology.size()];
+
+			// Value Iteration
+			for (int i = 0; i < agent.vehicles().size(); i++) {
+				Arrays.fill(stateValues, 0.0);  // reset the states Values to 0
+				Vehicle vehicle = agent.vehicles().get(i);
+				int nbrOfIterationsToConverge = 0;
+				City previousFrom;
+				for (double maxDiff = 1.0; maxDiff > 1e-7; nbrOfIterationsToConverge++) {
+					maxDiff = 0.0;
+					
+					// coputation of the rewards obtained by arriving in a city
+					for (City city: topology) {
+						comingToCityValues[city.id] = getFutureReward(city, topology, td, stateValues);
+					}
+					previousFrom = topology.cities().get(0);
+							
+					for (int state = 0; state < QTable[0].length; state++) {
+						int[] fromAndTo = getStateIds(stateMap.getKey(state)); // Array of 2 elements consisting of both ID's
+						City from = (topology.cities()).get(fromAndTo[0]);
+						double best = -Double.MAX_VALUE;
+						
+						if (previousFrom != from) {
+							comingToCityValues[previousFrom.id] = getFutureReward(previousFrom, topology, td, stateValues);
+						}
+						
+						if (fromAndTo[1] != -1.0) { //there is a package present
+							City to = (topology.cities()).get(fromAndTo[1]);
+
+							if (vehicle.capacity() >= td.weight(from, to)) {
+								QTable[i][state][0] = td.reward(from, to) - from.distanceTo(to)*vehicle.costPerKm()
+										+ discount*comingToCityValues[to.id]; // Compute reward for delivering task
+								best = Math.max(best, QTable[i][state][0]); // best can be updated on each action
+							}
+						}
+						for(City neighbourg : from) {
+							QTable[i][state][neighbourg.id + 1] = -from.distanceTo(neighbourg)*vehicle.costPerKm()
+									+ discount*comingToCityValues[neighbourg.id]; // Compute reward for moving to other city
+							best = Math.max(best, QTable[i][state][neighbourg.id + 1]);
+						}
+						maxDiff = Math.max(maxDiff, Math.abs(stateValues[state] - best));
+						stateValues[state] = best;
+						previousFrom = from;
+					}
+				}
+				if (i == 0) {
+					System.out.println(nbrOfIterationsToConverge + " iterations to converge");
+					printQ(QTable[0]);
+				}
+			}
+		}
 	
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask) {
