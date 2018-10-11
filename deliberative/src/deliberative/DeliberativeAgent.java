@@ -17,7 +17,7 @@ import logist.topology.Topology.City;
 @SuppressWarnings("unused")
 public class DeliberativeAgent implements DeliberativeBehavior {
 
-	enum Algorithm { BFS, ASTAR }
+	enum Algo { BFS, ASTAR }
 	
 	/* Environment */
 	Topology topology;
@@ -27,23 +27,37 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 	Agent agent;
 	int capacity;
 
-	/* the planning class */
+	/* the algorithm */
+	Algo algo;
 	Algorithm algorithm;
+	
+	/* the current state */
+	State initState;
 	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 		this.topology = topology;
 		this.td = td;
 		this.agent = agent;
+		initState = new State(); // TODO: add arguments
 		
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
 		String algorithmName = agent.readProperty("algorithm", String.class, "ASTAR");
 		
 		// Throws IllegalArgumentException if algorithm is unknown
-		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
+		algo = Algo.valueOf(algorithmName.toUpperCase());
+		switch (algo) {
+		case ASTAR:
+			algorithm = new AStar();
+			break;
+		case BFS:
+			algorithm = new BFS();
+			break;
+		default:
+			throw new AssertionError("Should not happen.");
+		}
 		
-		// ...
 	}
 	
 	@Override
@@ -51,18 +65,7 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 		Plan plan;
 
 		// Compute the plan with the selected algorithm.
-		switch (algorithm) {
-		case ASTAR:
-			// ...
-			plan = naivePlan(vehicle, tasks);
-			break;
-		case BFS:
-			// ...
-			plan = naivePlan(vehicle, tasks);
-			break;
-		default:
-			throw new AssertionError("Should not happen.");
-		}		
+		plan = naivePlan(vehicle, tasks);
 		return plan;
 	}
 	
@@ -91,11 +94,6 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 
 	@Override
 	public void planCancelled(TaskSet carriedTasks) {
-		
-		if (!carriedTasks.isEmpty()) {
-			// This cannot happen for this simple agent, but typically
-			// you will need to consider the carriedTasks when the next
-			// plan is computed.
-		}
+		initState = new State(); // TODO: add arguments, THIS SHOULD INCLUDE THE CARRIEDTASKS!!
 	}
 }
