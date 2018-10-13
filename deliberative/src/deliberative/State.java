@@ -10,8 +10,9 @@ import uchicago.src.collection.Pair;
 public class State {
 	Topology td;
 	City c;
-	ArrayList<Task> tasks;
-	ArrayList<City> cities;
+	ArrayList<Task> tasksAvailable;
+	ArrayList<Task> pickedUpTasks;
+	State parent = null;
 	
 	public void createChildren() {
 		ArrayList<State> children = new ArrayList<State>();
