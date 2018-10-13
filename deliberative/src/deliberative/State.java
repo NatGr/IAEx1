@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import logist.plan.Action;
 import logist.plan.Action.Pickup;
+import logist.plan.Plan;
 import logist.plan.Action.Delivery;
 import logist.task.Task;
 import logist.task.TaskSet;
@@ -91,27 +92,31 @@ public class State implements Cloneable {
 		}
 	}
 	
-	/* returns the action that was performed to go from state.parent to state
-	if state.parent == null, return null */
-	public Action getPreviousAction() {
+	/* return the Plan to get to the last state */
+	public Plan getPlan() {
 		if (parent == null) {
-			return null;
-		}
-		if (availableTasks.length < parent.availableTasks.length) {
-			for (int i = 0; i < availableTasks.length; i++) {
-				if (availableTasks[i] != parent.availableTasks[i]) {
-					return new Pickup(parent.availableTasks[i]);
-				}
-			}
+			return new Plan(city);
 		} else {
-			for (int i = 0; i < pickedUpTasks.length; i++) {
-				if (pickedUpTasks[i] != parent.pickedUpTasks[i]) {
-					return new Delivery(parent.pickedUpTasks[i]);
+			Plan plan = parent.getPlan();
+			
+			if (availableTasks.length < parent.availableTasks.length) {
+				for (int i = 0; i < availableTasks.length; i++) {
+					if (availableTasks[i] != parent.availableTasks[i]) {
+						plan.appendMove(city);
+						plan.appendPickup(parent.availableTasks[i]);
+					}
+				}
+			} else {
+				for (int i = 0; i < pickedUpTasks.length; i++) {
+					if (pickedUpTasks[i] != parent.pickedUpTasks[i]) {
+						plan.appendMove(city);
+						plan.appendDelivery(parent.pickedUpTasks[i]);
+					}
 				}
 			}
+			
+			return plan;
 		}
-		System.err.println("We did not find the previous action"); // should never happen
-		return null;
 	}
 	
 	// return wether the state is terminal (i.e., if all packages were delivered)

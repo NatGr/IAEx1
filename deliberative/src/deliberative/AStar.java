@@ -6,14 +6,17 @@ import java.util.List;
 import logist.plan.Action;
 import logist.plan.Plan;
 
-public class AStar extends Algorithm {
+public class AStar implements Algorithm {
 
 	@Override
 	public Plan plan(State initState) {
-		List<Action> actions = new ArrayList<Action>();
 		// TODO Auto-generated method stub
 		
-		return getPlanFromActions(actions, initState.city);
+		State goalState = null; // getting the optimal state
+		
+		
+
+		return goalState.getPlan();
 	}
 
 }
