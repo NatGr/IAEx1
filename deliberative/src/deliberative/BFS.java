@@ -16,7 +16,14 @@ public class BFS extends Algorithm {
 		Queue<State> queue = new LinkedList<State>();
 		
 		
-		return getPlanFromActions(actions, initState.c);
+		State state = null; // getting the optimal state from bfs
+		
+		
+		while (state.parent != null) {
+			actions.add(state.getPreviousAction());
+			state = state.parent;
+		}
+		return getPlanFromActions(actions, initState.city);
 	}
 
 }

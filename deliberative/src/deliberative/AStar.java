@@ -13,7 +13,7 @@ public class AStar extends Algorithm {
 		List<Action> actions = new ArrayList<Action>();
 		// TODO Auto-generated method stub
 		
-		return getPlanFromActions(actions, initState.c);
+		return getPlanFromActions(actions, initState.city);
 	}
 
 }

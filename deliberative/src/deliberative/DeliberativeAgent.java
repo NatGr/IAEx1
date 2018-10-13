@@ -2,6 +2,9 @@ package deliberative;
 
 /* import table */
 import logist.simulation.Vehicle;
+
+import java.util.ArrayList;
+
 import logist.agent.Agent;
 import logist.behavior.DeliberativeBehavior;
 import logist.plan.Plan;
@@ -25,24 +28,17 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 	
 	/* the properties of the agent */
 	Agent agent;
-	int capacity;
 
 	/* the algorithm */
 	Algo algo;
 	Algorithm algorithm;
 	
-	/* the current state */
-	State initState;
-	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 		this.topology = topology;
-		this.td = td;
 		this.agent = agent;
-		initState = new State(); // TODO: add arguments
 		
 		// initialize the planner
-		int capacity = agent.vehicles().get(0).capacity();
 		String algorithmName = agent.readProperty("algorithm", String.class, "ASTAR");
 		
 		// Throws IllegalArgumentException if algorithm is unknown
@@ -61,12 +57,10 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 	}
 	
 	@Override
-	public Plan plan(Vehicle vehicle, TaskSet tasks) {
-		Plan plan;
-
-		// Compute the plan with the selected algorithm.
-		plan = naivePlan(vehicle, tasks);
-		return plan;
+	public Plan plan(Vehicle vehicle, TaskSet tasks) {	
+		State initState = new State(vehicle.getCurrentCity(), tasks,
+				vehicle.getCurrentTasks(), vehicle.capacity());
+		return algorithm.plan(initState);
 	}
 	
 	private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
@@ -93,7 +87,5 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 	}
 
 	@Override
-	public void planCancelled(TaskSet carriedTasks) {
-		initState = new State(); // TODO: add arguments, THIS SHOULD INCLUDE THE CARRIEDTASKS!!
-	}
+	public void planCancelled(TaskSet carriedTasks) {} // vehicle.getCurrentTasks() is called in plan so this is useless
 }
