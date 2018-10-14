@@ -14,10 +14,15 @@ public class BFS implements Algorithm {
 	public Plan plan(State initState) {
 		Queue<State> queue = new LinkedList<State>();
 		
+		queue.add(initState);
 		
-		State goalState = null; // getting the optimal state from bfs
-		
-		
+		State goalState = initState;
+		while(!goalState.isTerminal()) {
+			for (State s: goalState.createChildren()) {
+				queue.add(s);
+			}
+			goalState = queue.poll();
+		}		
 
 		return goalState.getPlan();
 	}

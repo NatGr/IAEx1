@@ -1,6 +1,7 @@
 package deliberative;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import logist.plan.Action;
 import logist.plan.Action.Pickup;
@@ -43,8 +44,8 @@ public class State implements Cloneable {
 		// rest is set to null
 	}
 	
-	// returns an arraylist containing the childrens of the state
-	public ArrayList<State> createChildrens() {
+	// returns an arraylist containing the children of the state
+	public ArrayList<State> createChildren() {
 		try {
 			if (isTerminal()) {
 				return null;
@@ -99,10 +100,18 @@ public class State implements Cloneable {
 		} else {
 			Plan plan = parent.getPlan();
 			
+			
+			/*
+			 * There has to be at least one difference with the parent state
+			 * Either the availableTasks length is one shorter
+			 * Or either the pickedUpTasks length is one shorter*/
 			// 1. we took take a new package
 			if (availableTasks.length < parent.availableTasks.length) {
 				for (int i = 0; i < availableTasks.length; i++) {
 					if (availableTasks[i] != parent.availableTasks[i]) {
+						System.out.println(city);
+						List<City> cities = city.pathTo(availableTasks[i].pickupCity);
+						System.out.println(cities);
 						for (City city : city.pathTo(availableTasks[i].pickupCity)) {
 							plan.appendMove(city);
 						}

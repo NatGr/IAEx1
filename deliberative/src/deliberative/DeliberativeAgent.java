@@ -20,7 +20,7 @@ import logist.topology.Topology.City;
 @SuppressWarnings("unused")
 public class DeliberativeAgent implements DeliberativeBehavior {
 
-	enum Algo { BFS, ASTAR }
+	enum Algo { BFS, ASTAR, NAIVE }
 	
 	/* Environment */
 	Topology topology;
@@ -49,15 +49,18 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 			break;
 		case BFS:
 			algorithm = new BFS();
-			break;
-		default:
-			throw new AssertionError("Should not happen.");
+			break;			
+		//default:
+		//	throw new AssertionError("Should not happen.");
 		}
 		
 	}
 	
 	@Override
 	public Plan plan(Vehicle vehicle, TaskSet tasks) {	
+		if (algo == Algo.NAIVE) {
+			return naivePlan(vehicle, tasks);
+		}
 		State initState = new State(vehicle.getCurrentCity(), tasks,
 				vehicle.getCurrentTasks(), vehicle.capacity());
 		return algorithm.plan(initState);
