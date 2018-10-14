@@ -49,44 +49,18 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 			break;
 		case BFS:
 			algorithm = new BFS();
-			break;			
-		//default:
-		//	throw new AssertionError("Should not happen.");
+			break;
+		case NAIVE:
+			algorithm = new Naive();
 		}
 		
 	}
 	
 	@Override
 	public Plan plan(Vehicle vehicle, TaskSet tasks) {	
-		if (algo == Algo.NAIVE) {
-			return naivePlan(vehicle, tasks);
-		}
 		State initState = new State(vehicle.getCurrentCity(), tasks,
 				vehicle.getCurrentTasks(), vehicle.capacity());
 		return algorithm.plan(initState);
-	}
-	
-	private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
-		City current = vehicle.getCurrentCity();
-		Plan plan = new Plan(current);
-
-		for (Task task : tasks) {
-			// move: current city => pickup location
-			for (City city : current.pathTo(task.pickupCity))
-				plan.appendMove(city);
-
-			plan.appendPickup(task);
-
-			// move: pickup location => delivery location
-			for (City city : task.path())
-				plan.appendMove(city);
-
-			plan.appendDelivery(task);
-
-			// set current city
-			current = task.deliveryCity;
-		}
-		return plan;
 	}
 
 	@Override

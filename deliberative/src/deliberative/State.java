@@ -1,19 +1,16 @@
 package deliberative;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
-import logist.plan.Action;
-import logist.plan.Action.Pickup;
 import logist.plan.Plan;
-import logist.plan.Action.Delivery;
 import logist.task.Task;
 import logist.task.TaskSet;
 import logist.topology.Topology.City;
 
 public class State implements Cloneable {
-	private Task[] availableTasks; // much less memory intensive than an arraylist
-	private Task[] pickedUpTasks; // we use arrays of size 0 instead of null when the array is empty
+	Task[] availableTasks; // much less memory intensive than an arraylist
+	Task[] pickedUpTasks; // we use arrays of size 0 instead of null when the array is empty
 	State parent;
 	City city;
 	int remainingCapacity;
@@ -56,6 +53,7 @@ public class State implements Cloneable {
 				if (remainingCapacity >= availableTasks[i].weight) {
 					State child = (State) this.clone();
 					child.parent = this;
+					
 					child.availableTasks = new Task[availableTasks.length - 1]; // might be an array of size 0
 					for (int j = 0; j < i; j++) {
 						child.availableTasks[j] = availableTasks[j];
@@ -63,6 +61,10 @@ public class State implements Cloneable {
 					for (int j = i+1; j < availableTasks.length; j++) {
 						child.availableTasks[j-1] = availableTasks[j];
 					}
+					
+					// we have to add it to the task to the picked up tasks
+					child.pickedUpTasks = Arrays.copyOf(pickedUpTasks, pickedUpTasks.length + 1);
+					child.pickedUpTasks[pickedUpTasks.length] = availableTasks[i];
 					child.city = availableTasks[i].pickupCity;
 					child.remainingCapacity -= availableTasks[i].weight;
 					children.add(child);
@@ -73,6 +75,7 @@ public class State implements Cloneable {
 			for (int i = 0; i < pickedUpTasks.length; i++) {
 				State child = (State) this.clone();
 				child.parent = this;
+				
 				child.pickedUpTasks = new Task[pickedUpTasks.length - 1];
 				for (int j = 0; j < i; j++) {
 					child.pickedUpTasks[j] = pickedUpTasks[j];
@@ -80,6 +83,7 @@ public class State implements Cloneable {
 				for (int j = i+1; j < pickedUpTasks.length; j++) {
 					child.pickedUpTasks[j-1] = pickedUpTasks[j];
 				}
+				
 				child.city = pickedUpTasks[i].deliveryCity;
 				child.remainingCapacity += pickedUpTasks[i].weight;
 				children.add(child);
@@ -99,32 +103,31 @@ public class State implements Cloneable {
 			return new Plan(city);
 		} else {
 			Plan plan = parent.getPlan();
-			
-			
 			/*
 			 * There has to be at least one difference with the parent state
 			 * Either the availableTasks length is one shorter
 			 * Or either the pickedUpTasks length is one shorter*/
 			// 1. we took take a new package
 			if (availableTasks.length < parent.availableTasks.length) {
-				for (int i = 0; i < availableTasks.length; i++) {
-					if (availableTasks[i] != parent.availableTasks[i]) {
-						System.out.println(city);
-						List<City> cities = city.pathTo(availableTasks[i].pickupCity);
-						System.out.println(cities);
-						for (City city : city.pathTo(availableTasks[i].pickupCity)) {
+				for (int i = 0; i < parent.availableTasks.length; i++) {
+					if (i == availableTasks.length || availableTasks[i] != parent.availableTasks[i]) {
+						// if i == availableTasks.length, it means parent took its last available task
+						// if availableTasks[i] != parent.availableTasks[i], it means pakent took action number i
+						for (City city : parent.city.pathTo(parent.availableTasks[i].pickupCity)) {
 							plan.appendMove(city);
 						}
 						plan.appendPickup(parent.availableTasks[i]);
+						break; // this should not trigger more than once
 					}
 				}
 			} else { // 2. we delivered one of the packages we had
-				for (int i = 0; i < pickedUpTasks.length; i++) {
-					if (pickedUpTasks[i] != parent.pickedUpTasks[i]) {
-						for (City city : pickedUpTasks[i].path()) {
+				for (int i = 0; i < parent.pickedUpTasks.length; i++) {
+					if (i == pickedUpTasks.length || pickedUpTasks[i] != parent.pickedUpTasks[i]) {
+						for (City city : parent.city.pathTo(parent.pickedUpTasks[i].deliveryCity)) {
 							plan.appendMove(city);	
 						}
 						plan.appendDelivery(parent.pickedUpTasks[i]);
+						break;
 					}
 				}
 			}
