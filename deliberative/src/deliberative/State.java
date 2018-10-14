@@ -99,17 +99,22 @@ public class State implements Cloneable {
 		} else {
 			Plan plan = parent.getPlan();
 			
+			// 1. we took take a new package
 			if (availableTasks.length < parent.availableTasks.length) {
 				for (int i = 0; i < availableTasks.length; i++) {
 					if (availableTasks[i] != parent.availableTasks[i]) {
-						plan.appendMove(city);
+						for (City city : city.pathTo(availableTasks[i].pickupCity)) {
+							plan.appendMove(city);
+						}
 						plan.appendPickup(parent.availableTasks[i]);
 					}
 				}
-			} else {
+			} else { // 2. we delivered one of the packages we had
 				for (int i = 0; i < pickedUpTasks.length; i++) {
 					if (pickedUpTasks[i] != parent.pickedUpTasks[i]) {
-						plan.appendMove(city);
+						for (City city : pickedUpTasks[i].path()) {
+							plan.appendMove(city);	
+						}
 						plan.appendDelivery(parent.pickedUpTasks[i]);
 					}
 				}
