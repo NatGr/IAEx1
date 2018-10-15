@@ -8,12 +8,13 @@ import logist.task.Task;
 import logist.task.TaskSet;
 import logist.topology.Topology.City;
 
-public class State implements Cloneable {
+public class State implements Cloneable, Comparable<State> {
 	Task[] availableTasks; // much less memory intensive than an arraylist
 	Task[] pickedUpTasks; // we use arrays of size 0 instead of null when the array is empty
 	State parent;
 	City city;
 	int remainingCapacity;
+	int cost = 0; //for A-start algorithm
 	
 	/* constructor takes the current city of the vehicle, the set of the available tasks,
 	 *  the set of the picked up tasks and the capacity of the vehicle
@@ -67,6 +68,8 @@ public class State implements Cloneable {
 					child.pickedUpTasks[pickedUpTasks.length] = availableTasks[i];
 					child.city = availableTasks[i].pickupCity;
 					child.remainingCapacity -= availableTasks[i].weight;
+					//We calculate the total cost for delivery when picking up the package
+					child.cost = (int) (parent.cost + availableTasks[i].pickupCity.distanceTo(availableTasks[i].deliveryCity) - availableTasks[i].reward); //TODO: Still need to multiply this with cost per km
 					children.add(child);
 				}
 			}
@@ -140,4 +143,11 @@ public class State implements Cloneable {
 	public boolean isTerminal() {
 		return availableTasks.length == 0 && pickedUpTasks.length == 0;
 	}
+
+	@Override
+	public int compareTo(State s2) {
+		//System.out.println("Compare agent 1: ("+this.cost+") with agent 2: ("+s2.cost+")");
+		return this.cost - s2.cost;
+	}
+
 }

@@ -10,6 +10,7 @@ public class BFS implements Algorithm {
 
 	@Override
 	public Plan plan(State initState) {
+		System.out.println("Create plan");
 		Queue<State> queue = new LinkedList<State>();
 		ArrayList<State> finalStates = new ArrayList<State>();
 		queue.add(initState);
