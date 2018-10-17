@@ -57,10 +57,19 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 	}
 	
 	@Override
-	public Plan plan(Vehicle vehicle, TaskSet tasks) {	
+	public Plan plan(Vehicle vehicle, TaskSet tasks) {
+		Plan plan;
 		State initState = new State(vehicle.getCurrentCity(), tasks,
 				vehicle.getCurrentTasks(), vehicle.capacity());
-		return algorithm.plan(initState);
+		
+		long deltaTime = System.nanoTime();
+		System.out.println("Start Computing a plan");
+		plan = algorithm.plan(initState);
+		deltaTime = System.nanoTime() - deltaTime;
+		System.out.println("Time elapsed (s) for " + tasks.size() + " tasks with " + algo + ": " + (deltaTime/1000000000));
+		System.out.println("Plan total cost is of " + plan.totalDistance() + "km");
+		System.out.println("\n");
+		return plan;
 	}
 
 	@Override

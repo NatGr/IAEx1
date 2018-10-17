@@ -14,7 +14,7 @@ public class State implements Cloneable, Comparable<State> {
 	State parent;
 	City city;
 	int remainingCapacity;
-	int cost = 0; //for A-start algorithm
+	double cost; // cost of the state, simply the total distance from base state
 	
 	/* constructor takes the current city of the vehicle, the set of the available tasks,
 	 *  the set of the picked up tasks and the capacity of the vehicle
@@ -39,6 +39,7 @@ public class State implements Cloneable, Comparable<State> {
 				remainingCapacity -= task.weight;
 			}
 		}
+		cost = 0;
 		// rest is set to null
 	}
 	
@@ -68,8 +69,7 @@ public class State implements Cloneable, Comparable<State> {
 					child.pickedUpTasks[pickedUpTasks.length] = availableTasks[i];
 					child.city = availableTasks[i].pickupCity;
 					child.remainingCapacity -= availableTasks[i].weight;
-					//We calculate the total cost for delivery when picking up the package
-					child.cost = (int) (parent.cost + availableTasks[i].pickupCity.distanceTo(availableTasks[i].deliveryCity) - availableTasks[i].reward); //TODO: Still need to multiply this with cost per km
+					child.cost += this.city.distanceTo(child.city); // cost to go and pickup that package
 					children.add(child);
 				}
 			}
@@ -89,13 +89,14 @@ public class State implements Cloneable, Comparable<State> {
 				
 				child.city = pickedUpTasks[i].deliveryCity;
 				child.remainingCapacity += pickedUpTasks[i].weight;
+				child.cost += this.city.distanceTo(child.city); // cost to go and deliver that package
 				children.add(child);
 			}
 			return children;
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
-			System.exit(-1); // TODO: Thibauld, I have no idea if that's the "java good practice way to handle this", feel free to change
+			System.exit(-1);
 			return null;
 		}
 	}
@@ -144,10 +145,29 @@ public class State implements Cloneable, Comparable<State> {
 		return availableTasks.length == 0 && pickedUpTasks.length == 0;
 	}
 
+	// return the difference between this state's cost and s2's cost, converted to an integer
 	@Override
 	public int compareTo(State s2) {
-		//System.out.println("Compare agent 1: ("+this.cost+") with agent 2: ("+s2.cost+")");
-		return this.cost - s2.cost;
+		return (int) (this.cost - s2.cost);
 	}
-
+	
+	// returns true if both states are equivalent, this does not take the cost and the parent into account!
+	public boolean equals(State s2) {
+		if (city != s2.city || availableTasks.length != s2.availableTasks.length || pickedUpTasks.length != s2.pickedUpTasks.length) {
+			return false;
+		} else {
+			for (int i = 0; i < availableTasks.length; i++) {
+				if (availableTasks[i] != s2.availableTasks[i]) { // pointer comparison is good enough, 
+					// the tasks are always ordered in the same way as the initialState
+					return false;
+				}
+			}
+			for (int i = 0; i < pickedUpTasks.length; i++) {
+				if (pickedUpTasks[i] != s2.pickedUpTasks[i]) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
 }
