@@ -12,7 +12,6 @@ public class BFS implements Algorithm {
 	public Plan plan(State initState) {
 		Queue<State> queue = new LinkedList<State>();
 		ArrayList<State> finalStates = new ArrayList<State>();
-		queue.add(initState);
 		
 		State state = initState;
 		// BFS
@@ -20,7 +19,7 @@ public class BFS implements Algorithm {
 			if (state.isTerminal()) {
 				finalStates.add(state);
 			} else {
-				for (State s: state.createChildren()) {
+				for (State s: state.createChildren(false)) {
 					boolean found = false;
 					for (State inQueue: queue) { // we check if an equivalent state is not already in the queue
 						if (s.equals(inQueue)) {
@@ -30,6 +29,10 @@ public class BFS implements Algorithm {
 							 * modify the cost and parent of that state in the queue, this will not completely result
 							 * in BFS since our state should be at the end of the queue but this doesn't change anything
 							 * and is easier to code so it is done anyway
+							 * 
+							 * we check if the state is in the queue and not in the set of all seen states since we know from 
+							 * the BFS ordering that all states of depth x will be in the queue before the first state of depth x
+							 * is taken out of it and from the problem that two states cannot be the same if they don't have the same depth
 							 */
 							if (inQueue.cost > s.cost) {
 								inQueue.cost = s.cost;

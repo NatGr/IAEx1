@@ -9,12 +9,13 @@ import logist.task.TaskSet;
 import logist.topology.Topology.City;
 
 public class State implements Cloneable, Comparable<State> {
-	Task[] availableTasks; // much less memory intensive than an arraylist
-	Task[] pickedUpTasks; // we use arrays of size 0 instead of null when the array is empty
+	private Task[] availableTasks; // much less memory intensive than an arraylist
+	private Task[] pickedUpTasks; // we use arrays of size 0 instead of null when the array is empty
 	State parent;
-	City city;
-	int remainingCapacity;
+	private City city;
+	private int remainingCapacity;
 	double cost; // cost of the state, simply the total distance from base state
+	double heuristic; // cost of the heuristic
 	
 	/* constructor takes the current city of the vehicle, the set of the available tasks,
 	 *  the set of the picked up tasks and the capacity of the vehicle
@@ -39,12 +40,12 @@ public class State implements Cloneable, Comparable<State> {
 				remainingCapacity -= task.weight;
 			}
 		}
-		cost = 0;
-		// rest is set to null
+		// rest is set to null or to 0 (java default initialisation)
 	}
 	
 	// returns an arraylist containing the children of the state
-	public ArrayList<State> createChildren() {
+	// the useHeuristic arguments specifies wether we should update the heuristic field of the childrens
+	public ArrayList<State> createChildren(boolean useHeuristic) {
 		try {
 			if (isTerminal()) {
 				return null;
@@ -70,6 +71,9 @@ public class State implements Cloneable, Comparable<State> {
 					child.city = availableTasks[i].pickupCity;
 					child.remainingCapacity -= availableTasks[i].weight;
 					child.cost += this.city.distanceTo(child.city); // cost to go and pickup that package
+					if (useHeuristic) {
+						child.computeHeuristic();
+					}
 					children.add(child);
 				}
 			}
@@ -90,6 +94,9 @@ public class State implements Cloneable, Comparable<State> {
 				child.city = pickedUpTasks[i].deliveryCity;
 				child.remainingCapacity += pickedUpTasks[i].weight;
 				child.cost += this.city.distanceTo(child.city); // cost to go and deliver that package
+				if (useHeuristic) {
+					child.computeHeuristic();
+				}
 				children.add(child);
 			}
 			return children;
@@ -145,14 +152,26 @@ public class State implements Cloneable, Comparable<State> {
 		return availableTasks.length == 0 && pickedUpTasks.length == 0;
 	}
 
-	// return the difference between this state's cost and s2's cost, converted to an integer
+	/* return the difference between this state's cost and s2's cost, including the heuristic 
+	(if no heuristic is used, heuristic = 0), the difference is rounded to -1, 0 or +1 */
 	@Override
 	public int compareTo(State s2) {
-		return (int) (this.cost - s2.cost);
+		double diff = this.cost + this.heuristic - s2.cost - s2.heuristic;
+		if (diff < 0) {
+			return -1;
+		} else if (diff > 0) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 	
 	// returns true if both states are equivalent, this does not take the cost and the parent into account!
-	public boolean equals(State s2) {
+	public boolean equals(Object obj) {
+		if (obj == null || ! (obj instanceof State)) {
+			return false;
+		}
+		State s2 = (State) obj;
 		if (city != s2.city || availableTasks.length != s2.availableTasks.length || pickedUpTasks.length != s2.pickedUpTasks.length) {
 			return false;
 		} else {
@@ -169,5 +188,42 @@ public class State implements Cloneable, Comparable<State> {
 			}
 			return true;
 		}
+	}
+	
+	/* computes the heuristic and updates the heuristic field
+	 * the heuristic used here is the maximum over all packages of the distance we will need to deliver that package from 
+	 * where we are (ignoring vehicle capacity and all of the other packages
+	 */
+	private void computeHeuristic() {
+		for (Task task: availableTasks) {
+			if (city != task.pickupCity) {
+				heuristic = Math.max(heuristic, city.distanceTo(task.pickupCity) + task.pathLength());
+			} else {
+				heuristic = Math.max(heuristic, task.pathLength());
+			}
+		}
+		for (Task task: pickedUpTasks) {
+			heuristic = Math.max(heuristic, city.distanceTo(task.deliveryCity));
+		}
+	}
+	
+	// return a hashcode for the state
+	public int hashCode() {
+		final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(availableTasks);
+        result = prime * result + Arrays.hashCode(pickedUpTasks);
+        result = prime * result + city.hashCode();
+        return result;
+	}
+	
+	// city getter
+	public City getCity() {
+		return this.city;
+	}
+	
+	// availableTasks getter
+	public Task[] getAvailableTasks() {
+		return this.availableTasks;
 	}
 }

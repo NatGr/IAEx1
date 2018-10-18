@@ -8,10 +8,10 @@ public class Naive implements Algorithm{
 
 	@Override
 	public Plan plan(State initState) {
-		City current = initState.city;
+		City current = initState.getCity();
 		Plan plan = new Plan(current);
 		
-		for (Task task : initState.availableTasks) {
+		for (Task task : initState.getAvailableTasks()) {
 			// move: current city => pickup location
 			for (City city : current.pathTo(task.pickupCity))
 				plan.appendMove(city);

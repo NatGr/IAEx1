@@ -2,58 +2,40 @@ package deliberative;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 
-import logist.plan.Action;
 import logist.plan.Plan;
 
 public class AStar implements Algorithm {
 	
-	public static Comparator<State> StateComparator = new Comparator<State>() {
-		public int compare(State s1, State s2) {
-			System.out.println("compare");
-			return s1.compareTo(s2);
-		}
-	};
-
 	@Override
 	public Plan plan(State initState) {
-		System.out.println("Calculate plan");
-		ArrayList<State> queue = new ArrayList<State>();
-		ArrayList<State> finalStates = new ArrayList<State>();
-		queue.add(initState);
+		PriorityQueue<State> priorityQueue = new PriorityQueue<State>();
+		Map<State, Double> seenStates = new HashMap<State, Double>();
 		
 		State state = initState;
-		// BFS
-		while(!queue.isEmpty()) {
+		while(state != null) {
 			if (state.isTerminal()) {
-				finalStates.add(state);
+				return state.getPlan();
 			} else {
-				for (State s: state.createChildren()) {
-					queue.add(s);
+				for (State s: state.createChildren(false)) {
+					Double prevScore = seenStates.get(s);
+					if (prevScore == null) {
+						seenStates.put(s, s.cost + s.heuristic);
+						priorityQueue.add(s);
+					} else if (s.cost + s.heuristic < prevScore) {
+						seenStates.put(s, s.cost + s.heuristic);
+						priorityQueue.remove(s); // TODO: check it doesn't remove something with equal comparator or with ==
+						priorityQueue.add(s);
+					} // else do nothing
 				}
-			}
-			queue.sort(StateComparator);
-			state = queue.remove(0);
-		}
-		
-		// finding best plan, i.e. the one leading to a final state with the smallest distance:
-		Plan bestPlan = null, currentPlan = null;
-		double bestDistance = Double.MAX_VALUE, currentDistance;
-		for (State finalState: finalStates) {
-			currentPlan = finalState.getPlan();
-			currentDistance = currentPlan.totalDistance();
-			if (currentDistance < bestDistance) {
-				bestPlan = currentPlan;
+				state = priorityQueue.poll();
 			}
 		}
-		return bestPlan;
+		return null; // should not happen
 	}
-	
-	
-	
-	
-
 }
