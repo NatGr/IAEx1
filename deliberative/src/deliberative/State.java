@@ -195,6 +195,7 @@ public class State implements Cloneable, Comparable<State> {
 	 * where we are (ignoring vehicle capacity and all of the other packages
 	 */
 	private void computeHeuristic() {
+		heuristic = 0;
 		for (Task task: availableTasks) {
 			if (city != task.pickupCity) {
 				heuristic = Math.max(heuristic, city.distanceTo(task.pickupCity) + task.pathLength());
