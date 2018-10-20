@@ -1,7 +1,9 @@
 package deliberative;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
 import logist.plan.Plan;
@@ -12,6 +14,7 @@ public class BFS implements Algorithm {
 	public Plan plan(State initState) {
 		Queue<State> queue = new LinkedList<State>();
 		ArrayList<State> finalStates = new ArrayList<State>();
+		Map<State, Double> seenStates = new HashMap<State, Double>();
 		
 		State state = initState;
 		// BFS
@@ -20,28 +23,14 @@ public class BFS implements Algorithm {
 				finalStates.add(state);
 			} else {
 				for (State s: state.createChildren(false)) {
-					boolean found = false;
-					for (State inQueue: queue) { // we check if an equivalent state is not already in the queue
-						if (s.equals(inQueue)) {
-							found = true;
-							/* /!\ the state we found does not necessarily have the same parent nor the same cost
-							 * so if the cost of our state is smaller than the cost of the found state, we will
-							 * modify the cost and parent of that state in the queue, this will not completely result
-							 * in BFS since our state should be at the end of the queue but this doesn't change anything
-							 * and is easier to code so it is done anyway
-							 * 
-							 * we check if the state is in the queue and not in the set of all seen states since we know from 
-							 * the BFS ordering that all states of depth x will be in the queue before the first state of depth x
-							 * is taken out of it and from the problem that two states cannot be the same if they don't have the same depth
-							 */
-							if (inQueue.cost > s.cost) {
-								inQueue.cost = s.cost;
-								inQueue.parent = s.parent;
-							}
-							break;
-						}
-					}
-					if (!found) {
+					Double prevScore = seenStates.get(s);  // will get a state that is equal in term of city, 
+					// availableTasks and pickedUpTasks but not necessarily cost
+					if (prevScore == null) {
+						seenStates.put(s, s.cost);
+						queue.add(s);
+					} else if (s.cost < prevScore) {
+						seenStates.put(s, s.cost);
+						queue.remove(s); // removes the state equivalent to s but with a lower score
 						queue.add(s);
 					}
 				}
