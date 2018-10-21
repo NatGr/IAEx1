@@ -20,7 +20,7 @@ public class BFS implements Algorithm {
 		// BFS
 		while(state != null) {
 			if (state.isTerminal()) {
-				if (bestFinalState != null && state.cost < bestFinalState.cost) {
+				if (bestFinalState == null || state.cost < bestFinalState.cost) {
 					bestFinalState = state;
 				}
 			} else {
