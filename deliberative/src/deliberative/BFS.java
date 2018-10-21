@@ -13,14 +13,16 @@ public class BFS implements Algorithm {
 	@Override
 	public Plan plan(State initState) {
 		Queue<State> queue = new LinkedList<State>();
-		ArrayList<State> finalStates = new ArrayList<State>();
 		Map<State, Double> seenStates = new HashMap<State, Double>();
+		State bestFinalState = null;
 		
 		State state = initState;
 		// BFS
 		while(state != null) {
 			if (state.isTerminal()) {
-				finalStates.add(state);
+				if (bestFinalState != null && state.cost < bestFinalState.cost) {
+					bestFinalState = state;
+				}
 			} else {
 				for (State s: state.createChildren(false)) {
 					Double prevScore = seenStates.get(s);  // will get a state that is equal in term of city, 
@@ -37,19 +39,8 @@ public class BFS implements Algorithm {
 			}
 			state = queue.poll();
 		}
-		
-		// finding best plan, i.e. the one leading to a final state with the smallest distance:
-		State bestState = null;
-		double bestDistance = Double.MAX_VALUE, currentDistance;
-		for (State finalState: finalStates) {
-			currentDistance = finalState.cost;
-			if (currentDistance < bestDistance) {
-				bestDistance = currentDistance;
-				bestState = finalState;
-			}
-		}
-		if (bestState != null) {
-			return bestState.getPlan();
+		if (bestFinalState != null) {
+			return bestFinalState.getPlan();
 		} else { // should not happen
 			return null;
 		}

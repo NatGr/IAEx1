@@ -2,6 +2,8 @@ package deliberative;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import logist.plan.Plan;
 import logist.task.Task;
@@ -192,19 +194,39 @@ public class State implements Cloneable, Comparable<State> {
 	
 	/* computes the heuristic and updates the heuristic field
 	 * the heuristic used here is the maximum over all packages of the distance we will need to deliver that package from 
-	 * where we are (ignoring vehicle capacity and all of the other packages
+	 * where we are (ignoring vehicle capacity and all of the other packages). It also takes paths of size 2 (where 
+	 * 1.delivery = 2.pickup) into account 
 	 */
 	private void computeHeuristic() {
+		Map<City, Double> incomingCosts = new HashMap<City, Double>();  // cost of a path that will lead to that city
 		heuristic = 0;
+		Double taskCost, incomingCost;
+		
 		for (Task task: availableTasks) {
-			if (city != task.pickupCity) {
-				heuristic = Math.max(heuristic, city.distanceTo(task.pickupCity) + task.pathLength());
-			} else {
-				heuristic = Math.max(heuristic, task.pathLength());
+			taskCost = city.distanceTo(task.pickupCity) + task.pathLength();
+			heuristic = Math.max(heuristic, taskCost);
+			
+			incomingCost = incomingCosts.get(task.deliveryCity);
+			if (incomingCost == null || taskCost > incomingCost) {
+				incomingCosts.put(task.deliveryCity, taskCost);
 			}
 		}
 		for (Task task: pickedUpTasks) {
-			heuristic = Math.max(heuristic, city.distanceTo(task.deliveryCity));
+			taskCost = city.distanceTo(task.deliveryCity);
+			heuristic = Math.max(heuristic, taskCost);
+			
+			incomingCost = incomingCosts.get(task.deliveryCity);
+			if (incomingCost == null || taskCost > incomingCost) {
+				incomingCosts.put(task.deliveryCity, taskCost);
+			}
+		}
+		
+		// we inspect path of length 1
+		for (Task task: availableTasks) {
+			incomingCost = incomingCosts.get(task.pickupCity);
+			if (incomingCost != null) {
+				heuristic = Math.max(heuristic, incomingCost + task.pathLength());
+			}
 		}
 	}
 	
