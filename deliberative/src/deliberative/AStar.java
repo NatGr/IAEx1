@@ -26,7 +26,10 @@ public class AStar implements Algorithm {
 						priorityQueue.add(s);
 					} else if (s.cost + s.heuristic < prevScore) {
 						seenStates.put(s, s.cost + s.heuristic);
-						priorityQueue.remove(s);
+						/* we do not remove the previous state from the queue, because we found out that this
+						 * slows the algorithm down (O(n) operation), since we add the new state as well, 
+						 * the new state's childrens will be put in the queue before the old states'children and
+						 * thus his childrens will not be put in the queue so it's indeed better than to explicitely remove it */
 						priorityQueue.add(s);
 					} // else do nothing
 				}
