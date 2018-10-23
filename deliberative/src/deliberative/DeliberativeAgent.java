@@ -62,6 +62,10 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 		State initState = new State(vehicle.getCurrentCity(), tasks,
 				vehicle.getCurrentTasks(), vehicle.capacity());
 		
+		
+		/*
+		 * Prints to evaluate performance of different configurations
+		 * */
 		long deltaTime = System.nanoTime();
 		System.out.println("Start Computing a plan");
 		plan = algorithm.plan(initState);
@@ -69,6 +73,7 @@ public class DeliberativeAgent implements DeliberativeBehavior {
 		System.out.println("Time elapsed (s) for " + tasks.size() + " tasks with " + algo + ": " + (deltaTime/1000000000));
 		System.out.println("Plan total cost is of " + plan.totalDistance() + "km");
 		System.out.println("\n");
+		
 		return plan;
 	}
 

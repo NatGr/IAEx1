@@ -10,12 +10,22 @@ public class AStar implements Algorithm {
 	
 	@Override
 	public Plan plan(State initState) {
+		/*
+		 * DataStructure to iterate over states in order of increasing costs*/		
 		PriorityQueue<State> priorityQueue = new PriorityQueue<State>();
+		
+		/*
+		 * Datastructure to see if we have handled a duplicate state before with lower cost.
+		 * If so, it doesn't make sense to add it to the priorityqueue.
+		 * */
 		Map<State, Double> seenStates = new HashMap<State, Double>();
+		
+		
 		
 		State state = initState;
 		while(state != null) {
 			if (state.isTerminal()) {
+				//Because we always underestimate the cost, we can return the first state that is terminal since they are stored in a priorityQueue
 				return state.getPlan();
 			} else {
 				for (State s: state.createChildren(true)) {

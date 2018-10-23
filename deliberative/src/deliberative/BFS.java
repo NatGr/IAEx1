@@ -11,8 +11,21 @@ public class BFS implements Algorithm {
 
 	@Override
 	public Plan plan(State initState) {
+		
+		/*
+		 * Datastructure to iterate over states in Breadth First Order
+		 * */
 		Queue<State> queue = new LinkedList<State>();
+		
+		/*
+		 * Datastructure to see if we have handled a duplicate state before with lower cost.
+		 * If so, it doesn't make sense to add it to the queue.
+		 * */
 		Map<State, Double> seenStates = new HashMap<State, Double>();
+		
+		/*
+		 * Keep track of bestFinalState seen yet. In this application, all final nodes of the BFS algorithm should be on the same depth (see report)
+		 * */
 		State bestFinalState = null;
 		
 		State state = initState;
