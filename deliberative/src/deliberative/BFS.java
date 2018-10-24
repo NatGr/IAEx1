@@ -44,7 +44,8 @@ public class BFS implements Algorithm {
 						queue.add(s);
 					} else if (s.cost < prevScore) {
 						seenStates.put(s, s.cost);
-						queue.remove(s); // removes the state equivalent to s but with a lower score
+						// we do not remove the state equivalent to s but with a higher score because it's too
+						// costly O(n)
 						queue.add(s);
 					}
 				}
