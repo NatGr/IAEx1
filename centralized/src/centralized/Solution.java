@@ -35,30 +35,36 @@ public class Solution {
 		return true;
 	}
 	
+	//nextTask(t)!=t
 	private boolean checkNextEqualsSelf() {
+		//i is index of task
 		for (int i=0; i<nbrTasks; i++) {
 			if (nextTask[i]==i)
 				return false;
 		}
-		for (int i=nbrTasks; i<nextTask.length;i++) {
-			if(nextTask[i]>nbrTasks || nextTask[i]<0) {
-				return false;
-			}
-		}
 		return true;
 	}
 	
+	//nextTask(v_k)=t_j => time(t_j)=1
 	private boolean checkNextVehicleTime() {
+		//iterate over all vehicles
 		for (int i=nbrTasks; i<nextTask.length; i++) {
+			//nextTask[i] is the first task of vehicle i-nbrTasks
 			if(time[nextTask[i]]!=1) {
-				return false;
+				if (nextTask[i]!=-1) { //possibility that a vehicle doesn't execute a task at all
+					return false;
+				}
 			}
 		}
 		return true;
 	}
 	
+	//nextTask(t_i)=t_j => time(t_j)=time(t_i)+1
 	private boolean checkTimeNextTask() {
 		for (int i=0; i<nbrTasks; i++) {
+			if(nextTask[i]==-1) { //final task so don't need to check time of nexttask
+				continue;
+			}
 			if(time[i]+1!=time[nextTask[i]]) {
 				return false;
 			}
@@ -66,6 +72,7 @@ public class Solution {
 		return true;
 	}
 	
+	//nextTask(v_k)=t_j => vehicle(t_j)=v_k
 	private boolean checkVehicleTaskPair() {
 		for (int i=nbrTasks; i<nbrVehicles; i++) {
 			if (vehicle[nextTask[i]]!=i) {
@@ -75,8 +82,12 @@ public class Solution {
 		return true;
 	}
 	
+	//nextTask(t_i)=t_j => vehicle(t_j) = vehicle(t_i)
 	private boolean checkNextTaskSameVehicle() {
 		for (int i=0; i<nbrTasks; i++) {
+			if(nextTask[i]==-1) { //final task so don't need to check vehicle of nexttask
+				continue;
+			}
 			if (vehicle[nextTask[i]]!=vehicle[i]) {
 				return false;
 			}
@@ -85,7 +96,9 @@ public class Solution {
 		return true;
 	}
 	
+	//all tasks must be delivered
 	private boolean checkAllTasksExecuted() {
+		//count occurence of each tasks as next task. Last element is the occurrence of the null element
 		int[] countOccurence = new int[nbrTasks + 1];
 		for (int i=0; i<nextTask.length; i++) {
 			if (nextTask[i]==-1) {
@@ -106,6 +119,8 @@ public class Solution {
 		return true;
 	}
 	
+	
+	//The capacity of a vehicle cannot be exceeded
 	private boolean checkCapacity() {
 		for (int i=0; i<weights.length; i++) {
 			if (weights[i]>vehicleCapacity[vehicle[i]]) {
