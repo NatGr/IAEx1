@@ -49,8 +49,10 @@ public class Solution {
 	}
 	
 	private boolean checkNextVehicleTime() {
-		for (int i=0; i<nbrTasks; i++) {
-			
+		for (int i=nbrTasks; i<nextTask.length; i++) {
+			if(time[nextTask[i]]!=1) {
+				return false;
+			}
 		}
 		return true;
 	}
