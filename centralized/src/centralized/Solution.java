@@ -18,14 +18,42 @@ public class Solution {
 	private int[] vehicle;  // the offset of the vehicle corresponding the the Task
 	private int[] time;  // the time offset of the given Task
 	int[] nextTask; // offset of the next Task or -1 if the next Task is null
+	
+	int nbrVehicles;
+	int nbrTasks;
+	
 	double score;  // score of the current solution
 	
+	
 	public Solution(TaskSet tasks, List<Vehicle> vehicles) {
-		int nbrVehicles = vehicles.size(), nbrTasks = 2*tasks.size();
+		nbrVehicles = vehicles.size(); nbrTasks = 2*tasks.size();
 		
 	}
 	
 	private boolean checkConstraints() {
+		
 		return true;
 	}
+	
+	private boolean checkNextEqualsSelf() {
+		for (int i=0; i<nbrTasks; i++) {
+			if (nextTask[i]==i)
+				return false;
+		}
+		for (int i=nbrTasks; i<nextTask.length;i++) {
+			if(nextTask[i]>nbrTasks || nextTask[i]<0) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private boolean checkNextVehicleTime() {
+		for (int i=0; i<nbrTasks; i++) {
+			
+		}
+		return true;
+	}
+	
+	
 }
