@@ -39,6 +39,7 @@ public class Solution {
 		city = new City[nbrTasks + nbrVehicles];
 		vehicleCapacity = new int[nbrVehicles];
 		vehicleCostPerKm = new int[nbrVehicles];
+		// TODO: init remainingCapacity, vehicle, time
 		nextTask = new int[nbrTasks + nbrVehicles];
 		Arrays.fill(nextTask, -1);  // default value is "next task is null"
 		
