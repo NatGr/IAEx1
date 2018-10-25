@@ -75,5 +75,45 @@ public class Solution {
 		return true;
 	}
 	
+	private boolean checkNextTaskSameVehicle() {
+		for (int i=0; i<nbrTasks; i++) {
+			if (vehicle[nextTask[i]]!=vehicle[i]) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private boolean checkAllTasksExecuted() {
+		int[] countOccurence = new int[nbrTasks + 1];
+		for (int i=0; i<nextTask.length; i++) {
+			if (nextTask[i]==-1) {
+				countOccurence[countOccurence.length-1]++;
+			}
+			else {
+				countOccurence[nextTask[i]]++;
+			}
+		}
+		for (int i=0; i<countOccurence.length-1;i++) {
+			if (countOccurence[i]!=1) {
+				return false;
+			}
+		}
+		if(countOccurence[countOccurence.length-1]!=nbrVehicles) {
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean checkCapacity() {
+		for (int i=0; i<weights.length; i++) {
+			if (weights[i]>vehicleCapacity[vehicle[i]]) {
+				return false;
+			}				
+		}
+		return true;
+	}
+	
 	
 }
