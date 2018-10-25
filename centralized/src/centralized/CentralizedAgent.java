@@ -2,6 +2,7 @@ package centralized;
 
 //the list of imports
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import logist.LogistSettings;
@@ -51,11 +52,12 @@ public class CentralizedAgent implements CentralizedBehavior {
         timeout_setup = ls.get(LogistSettings.TimeoutKey.SETUP);
         // the plan method cannot execute more than timeout_plan milliseconds
         timeout_plan = ls.get(LogistSettings.TimeoutKey.PLAN);
+        long SEED = 17;
         
         this.topology = topology;
         this.distribution = distribution;
         this.agent = agent;
-        this.solution = new Solution((Task[]) agent.getTasks().toArray(), agent.vehicles());
+        this.solution = new Solution(Arrays.asList((Task[]) agent.getTasks().toArray()), agent.vehicles(), SEED);
     }
 
     @Override
