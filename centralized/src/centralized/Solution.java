@@ -57,5 +57,23 @@ public class Solution {
 		return true;
 	}
 	
+	private boolean checkTimeNextTask() {
+		for (int i=0; i<nbrTasks; i++) {
+			if(time[i]+1!=time[nextTask[i]]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private boolean checkVehicleTaskPair() {
+		for (int i=nbrTasks; i<nbrVehicles; i++) {
+			if (vehicle[nextTask[i]]!=i) {
+				return false;
+			}
+		}		
+		return true;
+	}
+	
 	
 }
