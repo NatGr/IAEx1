@@ -1,6 +1,8 @@
 package centralized;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import logist.simulation.Vehicle;
 import logist.task.Task;
@@ -13,7 +15,7 @@ public class Solution {
 	private final int nbrVehicles, nbrTasks;
 	private final int[] weight;  // the weight of every Task
 	private final City[] city;  // the city corresponding to every Task and every Vehicle (initial city)
-	// that array is orderer by : [Task_0 (pickup), Task_0 (delivery), ..., Task_n (delivery), Vehicle_m, ..., Vehicle_0]
+	// that array is orderer by : [Task_0 (pickup), Task_0 (delivery), ..., Task_n (delivery), Vehicle_0, ..., Vehicle_m]
 	private final int[] vehicleCapacity;  // initial capacity of every vehicle
 	private final int[] vehicleCostPerKm;  // cost per Km of every vehicle
 	
@@ -22,17 +24,15 @@ public class Solution {
 	private int[] vehicle;  // the offset of the vehicle corresponding the the Task
 	private int[] time;  // the time offset of the given Task
 	int[] nextTask; // offset of the next Task or -1 if the next Task is null
-
-	// that array is orderer by : [Task_0 (pickup), Task_0 (delivery), ..., Task_n (delivery), Vehicle_m, ..., Vehicle_0]
+	// that array is orderer by : [Task_0 (pickup), Task_0 (delivery), ..., Task_n (delivery), Vehicle_0, ..., Vehicle_m]
 	double score;  // score of the current solution
 	
-	/* initializes all problem variables and generates a first valid solution randomly
-	 * we assume there are no tasks that no vehicle is able to carry (since that would make the 
-	 * problem unsolvable
+	/* initializes all problem variables and generates a first valid solution
+	 * if there are tasks that no vehicle is able to carry, the problem is unsolvable and we throw an IllegalArgumentException
 	 */
-	public Solution(Task[] tasks, List<Vehicle> vehicles) {
+	public Solution(List<Task> tasks, List<Vehicle> vehicles, long seed) throws IllegalArgumentException {
 		nbrVehicles = vehicles.size();
-		nbrTasks = 2*tasks.length;
+		nbrTasks = 2*tasks.size();
 		weight = new int[nbrTasks];
 		city = new City[nbrTasks + nbrVehicles];
 		vehicleCapacity = new int[nbrVehicles];
@@ -42,30 +42,43 @@ public class Solution {
 		time = new int[nbrTasks];
 		nextTask = new int[nbrTasks + nbrVehicles];
 		
-		for (int i = 0, pickup = 0, deliver = 1; i < tasks.length; i++, pickup += 2, deliver += 2) {
-			weight[pickup] = tasks[i].weight;
-			weight[deliver] = - weight[pickup];  // delivering a task is equivalent to taking a task of negtaive capacity
-			city[pickup] = tasks[i].pickupCity;
-			city[deliver] = tasks[i].deliveryCity;
-		}
-		
+		int maxCapacity = Integer.MIN_VALUE;
 		for (int i = 0; i < nbrVehicles; i++) {
-			city[city.length - i] = vehicles.get(i).homeCity();
+			city[nbrTasks + i] = vehicles.get(i).homeCity();
 			vehicleCapacity[i] = vehicles.get(i).capacity();
+			maxCapacity = Math.max(maxCapacity, vehicleCapacity[i]);
 			vehicleCostPerKm[i] = vehicles.get(i).costPerKm();
 		}
 		
-		// starting solution:
+		for (int i = 0, pickup = 0, deliver = 1; i < tasks.size(); i++, pickup += 2, deliver += 2) {
+			weight[pickup] = tasks.get(i).weight;
+			if (weight[pickup] > maxCapacity) {
+				throw new IllegalArgumentException("One of the tasks has a weight that is too big for any vehicle, the problem is unsolvable.");
+			}
+			weight[deliver] = - weight[pickup];  // delivering a task is equivalent to taking a task of negtaive capacity
+			city[pickup] = tasks.get(i).pickupCity;
+			city[deliver] = tasks.get(i).deliveryCity;
+		}
 		
+		// starting solution, we assign the tasks randomly but so as to respect the constraints:
+		Random generator = new Random(seed);
+		Collections.shuffle(tasks, generator);
+		for (Task task: tasks) {
+			for (int vehicle = generator.nextInt(nbrVehicles); ; vehicle = generator.nextInt(nbrVehicles)) {
+				
+			}
+		}
+		
+		// compute our solution's score
 		computeScore();
 	}
 	
 	// computes the score of the solution
 	private void computeScore() {
 		score = 0;
-		for (int i = 0, vehicleDrivenDistance = 0, offset; i < nbrVehicles; i++) {
+		for (int i = nbrTasks, vehicleDrivenDistance = 0, offset; i < nbrVehicles; i++) {
 			// iterates over all the tasks the vehicle performs
-			offset = nextTask.length - i;
+			offset = nbrTasks + i;
 			for(int current = offset, next = nextTask[offset]; next != -1; current = next, next = nextTask[next]) {
 				vehicleDrivenDistance += city[current].distanceTo(city[next]);
 			}
