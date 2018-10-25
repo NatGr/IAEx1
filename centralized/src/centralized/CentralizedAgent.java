@@ -55,7 +55,7 @@ public class CentralizedAgent implements CentralizedBehavior {
         this.topology = topology;
         this.distribution = distribution;
         this.agent = agent;
-        this.solution = new Solution(agent.getTasks(), agent.vehicles());
+        this.solution = new Solution((Task[]) agent.getTasks().toArray(), agent.vehicles());
     }
 
     @Override
