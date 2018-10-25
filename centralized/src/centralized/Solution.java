@@ -173,5 +173,25 @@ public class Solution {
 		return true;
 	}
 	
+	//Check pickup and delivery of same vehicle
+	private boolean checkPickupDeliveryVehicle() {
+		for (int i = 0; i < vehicle.length; i += 2) {
+			if(vehicle[i] != vehicle[i+1]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	
+	//Check if pickup of a task happens before the delivery of that task
+	private boolean checkPickupBeforeDelivery() {
+		for (int i = 0; i < time.length; i += 2) {
+			if(time[i]>=time[i+1]) {
+				return false;
+			}
+		}
+		return true;
+	}
 	
 }
