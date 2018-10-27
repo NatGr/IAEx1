@@ -207,4 +207,16 @@ public class Solution {
 		return true;
 	}
 	
+	private void changingVehicle(Solution a, int v1, int v2) {
+		Solution a1 = a;
+		int t = nextTask[nbrTasks + v1];
+		a1.nextTask[nbrTasks+v1] = a1.nextTask[t];
+		a1.nextTask[t] = a1.nextTask[nbrTasks+v2];
+		a1.nextTask[v2] = t;
+	}
+	
+	private void updateTime(Solution a, int v) {
+		
+	}
+	
 }
