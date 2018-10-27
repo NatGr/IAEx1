@@ -1,5 +1,7 @@
 package centralized;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -37,10 +39,9 @@ public class Solution {
 		city = new City[nbrTasks + nbrVehicles];
 		vehicleCapacity = new int[nbrVehicles];
 		vehicleCostPerKm = new int[nbrVehicles];
-		remainingCapacity = new int[nbrTasks];
-		vehicle = new int[nbrTasks];
-		time = new int[nbrTasks];
+		// TODO: init remainingCapacity, vehicle, time
 		nextTask = new int[nbrTasks + nbrVehicles];
+		Arrays.fill(nextTask, -1);  // default value is "next task is null"
 		
 		int maxCapacity = Integer.MIN_VALUE;
 		for (int i = 0; i < nbrVehicles; i++) {
@@ -62,11 +63,28 @@ public class Solution {
 		
 		// starting solution, we assign the tasks randomly but so as to respect the constraints:
 		Random generator = new Random(seed);
-		Collections.shuffle(tasks, generator);
-		for (Task task: tasks) {
-			for (int vehicle = generator.nextInt(nbrVehicles); ; vehicle = generator.nextInt(nbrVehicles)) {
-				
-			}
+		int[] nextTaskVehicle = new int[nbrVehicles];  // array containing the number of vehicles
+		for (int i = 0; i < nbrVehicles; i++) {
+			nextTaskVehicle[i] = nbrTasks + i;  // offset in the nextTask array
+		}
+		
+		List<Integer> permutation = new ArrayList<Integer>(); // random ordering of the tasks
+		for (int i = 0; i < tasks.size(); i++) {
+			permutation.add(i);
+		}
+		Collections.shuffle(permutation, generator);
+		
+		
+		for (int i: permutation) {
+			do {
+				int vehicle = generator.nextInt(nbrVehicles);
+				if (vehicleCapacity[vehicle] >= tasks.get(i).weight) {
+					nextTask[nextTaskVehicle[vehicle]] = 2*i; // pickup task i
+					nextTask[2*i] = 2*i+1; // delivering task i
+					nextTaskVehicle[vehicle] = 2*i+1;
+					break;
+				}
+			} while (true);
 		}
 		
 		// compute our solution's score
@@ -84,11 +102,6 @@ public class Solution {
 			}
 			score += vehicleCostPerKm[i]*vehicleDrivenDistance;
 		}
-	}
-	
-	private boolean checkConstraints() {
-		
-		return true;
 	}
 	
 	//nextTask(t)!=t

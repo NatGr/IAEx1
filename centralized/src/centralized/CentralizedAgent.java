@@ -1,5 +1,6 @@
 package centralized;
 
+import java.io.File;
 //the list of imports
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,7 +34,6 @@ public class CentralizedAgent implements CentralizedBehavior {
     private Agent agent;
     private long timeout_setup;
     private long timeout_plan;
-    private Solution solution;
     
     @Override
     public void setup(Topology topology, TaskDistribution distribution,
@@ -42,7 +42,7 @@ public class CentralizedAgent implements CentralizedBehavior {
         // this code is used to get the timeouts
         LogistSettings ls = null;
         try {
-            ls = Parsers.parseSettings("config\\settings_default.xml");
+            ls = Parsers.parseSettings("config" + File.separator + "settings_default.xml");
         }
         catch (Exception exc) {
             System.out.println("There was a problem loading the configuration file.");
@@ -52,17 +52,22 @@ public class CentralizedAgent implements CentralizedBehavior {
         timeout_setup = ls.get(LogistSettings.TimeoutKey.SETUP);
         // the plan method cannot execute more than timeout_plan milliseconds
         timeout_plan = ls.get(LogistSettings.TimeoutKey.PLAN);
-        long SEED = 17;
         
         this.topology = topology;
         this.distribution = distribution;
         this.agent = agent;
-        this.solution = new Solution(Arrays.asList((Task[]) agent.getTasks().toArray()), agent.vehicles(), SEED);
     }
 
     @Override
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
         long time_start = System.currentTimeMillis();
+        
+        long SEED = 17;
+        List<Task> list = new ArrayList<Task>();
+        for (Task task: tasks) {
+        	list.add(task);
+        }
+        Solution solution = new Solution(list, vehicles, SEED);
         
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
         Plan planVehicle1 = naivePlan(vehicles.get(0), tasks);
