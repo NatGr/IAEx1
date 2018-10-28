@@ -8,11 +8,13 @@ import java.util.Random;
 
 import logist.simulation.Vehicle;
 import logist.task.Task;
-import logist.task.TaskDistribution;
-import logist.task.TaskSet;
 import logist.topology.Topology.City;
 
-public class Solution {
+/*
+ * altought the methods implements cloneable, the clone method only performs a shallow copy,
+ * see the copy method for a deep copy
+ */
+public class Solution implements Cloneable {
 	// what we call Task in the following is either a task delivery or a task pickup
 	private final int nbrVehicles, nbrTasks;
 	private final int[] weight; // the weight of every Task
@@ -97,7 +99,7 @@ public class Solution {
 		// compute our solution's score
 		computeScore();
 	}
-
+	
 	// computes the score of the solution
 	private void computeScore() {
 		score = 0;
@@ -351,6 +353,31 @@ public class Solution {
 		// TODO: Check if delivery doesn't suddenly happen before pickup!!
 		updateTime(a, v);
 
+	}
+	
+	/**
+	 * makes a deep/shallow (depending on the arguments) copy of the object
+	 * @param newRemainingCapacity: wether we perform a deep copy of remainingCapacity or a shallow one
+	 * @param newVehicle: wether we perform a deep copy of vehicle or a shallow one
+	 * @param newTime: wether we perform a deep copy of time or a shallow one
+	 * @param newNextTask: wether we perform a deep copy of nextTask or a shallow one
+	 * @throws CloneNotSupportedException
+	 */
+	private Solution copy(boolean newRemainingCapacity, boolean newVehicle, boolean newTime, boolean newNextTask) throws CloneNotSupportedException {
+		Solution copy = (Solution) this.clone(); // shallow copy
+		if (newRemainingCapacity) {
+			copy.remainingCapacity = Arrays.copyOf(this.remainingCapacity, this.remainingCapacity.length);
+		}
+		if (newVehicle) {
+			copy.vehicle = Arrays.copyOf(this.vehicle, this.vehicle.length);
+		}
+		if (newTime) {
+			copy.time = Arrays.copyOf(this.time, this.time.length);
+		}
+		if (newNextTask) {
+			copy.nextTask = Arrays.copyOf(this.nextTask, this.nextTask.length);
+		}
+		return copy;
 	}
 
 }
