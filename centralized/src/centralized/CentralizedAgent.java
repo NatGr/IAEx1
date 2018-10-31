@@ -4,6 +4,7 @@ import java.io.File;
 //the list of imports
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import logist.LogistSettings;
@@ -63,20 +64,26 @@ public class CentralizedAgent implements CentralizedBehavior {
         long time_start = System.currentTimeMillis();
         
         long SEED = 17;
-        List<Task> list = new ArrayList<Task>();
+        ArrayList<Task> list = new ArrayList<Task>();
         for (Task task: tasks) {
         	list.add(task);
         }
         Solution solution = new Solution(list, vehicles, SEED);
-        
-//		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
-        Plan planVehicle1 = naivePlan(vehicles.get(0), tasks);
-
-        List<Plan> plans = new ArrayList<Plan>();
-        plans.add(planVehicle1);
-        while (plans.size() < vehicles.size()) {
-            plans.add(Plan.EMPTY);
+        if (list.size() == 0) {  // if we call generateNeighbours for a task with no solutions
+        	// we will loop infinitely
+        	return solution.getPlans(list);
         }
+        
+        // p: one of them, 1-p: another randomly
+        // or same with p decaying
+        // or if best_neighbourg > max take else simmulated annealing
+        System.out.println(solution.cost);
+        for (int i = 0; i <1000; i++) {
+        	solution = Collections.min(solution.generateNeighbours());
+        	System.out.println(solution.cost);
+        }
+        
+        List<Plan> plans = solution.getPlans(list);
         
         long time_end = System.currentTimeMillis();
         long duration = time_end - time_start;
