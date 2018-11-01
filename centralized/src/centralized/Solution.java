@@ -35,6 +35,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 	 * and we throw an IllegalArgumentException
 	 */	
 	public Solution(List<Task> tasks, List<Vehicle> vehicles, long seed) throws IllegalArgumentException {
+		//Initialization		
 		nbrVehicles = vehicles.size();
 		nbrTasks = 2 * tasks.size();
 		weight = new int[nbrTasks];
@@ -43,8 +44,9 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		vehicleCostPerKm = new int[nbrVehicles];
 		nextTask = new int[nbrTasks + nbrVehicles];
 		Arrays.fill(nextTask, -1); // default value is "next task is null"
-
-		int maxCapacity = Integer.MIN_VALUE;
+		int maxCapacity = Integer.MIN_VALUE; //Maximum capacity among all vehicles
+		
+		//Vehicle specific initialization
 		for (int i = 0; i < nbrVehicles; i++) {
 			city[nbrTasks + i] = vehicles.get(i).homeCity();
 			vehicleCapacity[i] = vehicles.get(i).capacity();
@@ -52,6 +54,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 			vehicleCostPerKm[i] = vehicles.get(i).costPerKm();
 		}
 
+		//Task specific initialization
 		for (int i = 0, pickup = 0, deliver = 1; i < tasks.size(); i++, pickup += 2, deliver += 2) {
 			weight[pickup] = tasks.get(i).weight;
 			if (weight[pickup] > maxCapacity) {
@@ -63,8 +66,11 @@ public class Solution implements Cloneable, Comparable<Solution> {
 			city[deliver] = tasks.get(i).deliveryCity;
 		}
 
-		// starting solution, we assign the tasks randomly but so as to respect the
-		// constraints:
+		/* 
+		 * Starting solution, we assign the tasks randomly but so as to respect the	constraints:
+		 */
+		
+		//Create relation between position of vehicle in nextTask array and (vehicleCapacity, vehicleCostPerKm)
 		Random generator = new Random(seed);
 		int[] nextTaskVehicle = new int[nbrVehicles]; // array containing the number of vehicles
 		for (int i = 0; i < nbrVehicles; i++) {
@@ -105,12 +111,15 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		int v1;
 		do {
 			v1 = generator.nextInt(nbrVehicles);
-		} while(nextTask[nbrTasks+v1] == -1);  // find a vehicle with at least two tasks
+		} while(nextTask[nbrTasks+v1] == -1);  // find a vehicle with at least two tasks (pickup and delivery)
 		
 		for (int v2 = 0; v2 < nbrVehicles; v2++) {
 			if (v2 != v1) {
 				int task = nextTask[nbrTasks+v1];
 				if (weight[task] <= vehicleCapacity[v2]) {
+					/*
+					 * Check with vehicleCapacity instead of remainingCapacity because the delivery happens immediatly after pickup
+					 * */
 					appendchangingVehicleToN(Neighbourgs, v1, v2);
 				}
 			}
@@ -121,12 +130,12 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		do {
 			v1 = generator.nextInt(nbrVehicles);
 			next = nextTask[nbrTasks+v1];
-		} while (next == -1 || nextTask[nextTask[next]] == -1); // find a vehicle with at least four tasks
+		} while (next == -1 || nextTask[nextTask[next]] == -1); // find a vehicle with at least four tasks (two times pickup and delivery)
 		
 		for (int i = nbrTasks+v1; nextTask[i] != -1; i = nextTask[i], nbrTasksVehicle++) {} // counts the nbr of tasks of a vehicle
 
-		int[] timeVehicle = new int[nbrTasksVehicle];
-		int[] remainingCapacity = new int[nbrTasksVehicle];
+		int[] timeVehicle = new int[nbrTasksVehicle]; //If task t (index in nextTask) is executed as i'th task by vehicle v, we will have value t at index i
+		int[] remainingCapacity = new int[nbrTasksVehicle]; //At index i, you have the remaining capacity after executing task i
 		int task = nextTask[nbrTasks+v1], pickupTOffset = -1, deliveryTOffset = -1;
 		int offsetPickup = generator.nextInt(nbrTasksVehicle/2); // number of Pickup Tasks we will see before taking the one we will change of vehicle
 		timeVehicle[0] = task;
@@ -151,7 +160,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 
 	/**
 	 * This procedure will add a new solution to N where the first pickup task 
-	 * (and the corresponding) delivery task will have been moved from v1 to the two first
+	 * (and the corresponding delivery task) will have been moved from v1 to the two first
 	 * positions of v2
 	 * 
 	 * @param N: the arraylist we will append the new solutions to
