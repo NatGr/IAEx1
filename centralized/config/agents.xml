@@ -7,6 +7,8 @@
 	<agent name="centralized-main">
 		<set class-path="bin/"/>
 		<set class-name="centralized.CentralizedAgent"/>
+		<set algorithm="TakeRandomWithP" />
+		<set probability=".99"/>
 	</agent>
 	
 </agents>

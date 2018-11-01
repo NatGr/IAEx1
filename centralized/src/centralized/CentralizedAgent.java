@@ -30,11 +30,15 @@ import logist.topology.Topology.City;
 @SuppressWarnings("unused")
 public class CentralizedAgent implements CentralizedBehavior {
 
+    enum Algo { TAKERANDOMWITHP }
+    
     private Topology topology;
     private TaskDistribution distribution;
     private Agent agent;
     private long timeout_setup;
     private long timeout_plan;
+    private Algo algorithm;
+    private double parameter;
     
     @Override
     public void setup(Topology topology, TaskDistribution distribution,
@@ -54,6 +58,13 @@ public class CentralizedAgent implements CentralizedBehavior {
         // the plan method cannot execute more than timeout_plan milliseconds
         timeout_plan = ls.get(LogistSettings.TimeoutKey.PLAN);
         
+        algorithm = Algo.valueOf(agent.readProperty("algorithm", String.class, "TakeRandomWithP").toUpperCase());
+        switch (algorithm) {
+        case TAKERANDOMWITHP: 
+        	parameter = agent.readProperty("probability", Double.class, 0.6);
+        	break;
+        }
+        
         this.topology = topology;
         this.distribution = distribution;
         this.agent = agent;
@@ -61,7 +72,9 @@ public class CentralizedAgent implements CentralizedBehavior {
 
     @Override
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
-        long time_start = System.currentTimeMillis();
+        long time_limit = System.currentTimeMillis() + (long) (0.999*timeout_plan) - 20;  
+        // we use a 0.999 factor margin for safety and a 20 ms safety margin for computing
+        // the plan
         
         long SEED = 17;
         ArrayList<Task> list = new ArrayList<Task>();
@@ -74,23 +87,55 @@ public class CentralizedAgent implements CentralizedBehavior {
         	return solution.getPlans(list);
         }
         
+        // remembers the best
         // p: one of them, 1-p: another randomly
         // or same with p decaying
         // or if best_neighbourg > max take else simmulated annealing
-        System.out.println(solution.cost);
-        for (int i = 0; i <1000; i++) {
-        	solution = Collections.min(solution.generateNeighbours());
-        	System.out.println(solution.cost);
+        switch (algorithm) {
+        case TAKERANDOMWITHP:
+        	solution = stochasticSearchTakeRandomWithP(solution, parameter, time_limit);
+        	break;
         }
         
+        
         List<Plan> plans = solution.getPlans(list);
-        
-        long time_end = System.currentTimeMillis();
-        long duration = time_end - time_start;
-        System.out.println("The plan was generated in "+duration+" milliseconds.");
-        
         return plans;
     }
+    
+    /* performs the stochastic search, at each stage, with probability p, we take the neighbourgh
+     * with best score, with probability 1-p, we take a random new neighbourg
+     */
+	Solution stochasticSearchTakeRandomWithP(Solution solution, double probability, long time_limit) {
+		Solution bestCurrentSolution = solution;
+		Random generator = new Random();
+		long time_start = System.currentTimeMillis();
+		
+		// loop body
+		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
+    	if (generator.nextDouble() < probability) {
+    		solution = Collections.min(neighbourgs);
+    	} else {
+    		solution = neighbourgs.get(generator.nextInt(neighbourgs.size()));
+    	}
+    	if (solution.cost < bestCurrentSolution.cost) {
+    		bestCurrentSolution = solution;
+    	}
+    	
+    	time_limit -= 3*(System.currentTimeMillis() - time_start);  // adding a safety margin of 3 iterations
+        while (System.currentTimeMillis() < time_limit) {
+        	neighbourgs = solution.generateNeighbours();
+        	if (generator.nextDouble() < probability) {
+        		solution = Collections.min(neighbourgs);
+        	} else {
+        		solution = neighbourgs.get(generator.nextInt(neighbourgs.size()));
+        	}
+        	if (solution.cost < bestCurrentSolution.cost) {
+        		bestCurrentSolution = solution;
+        	}        	
+        }
+        System.out.println(bestCurrentSolution.cost);
+        return bestCurrentSolution;
+	}
 
     private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
         City current = vehicle.getCurrentCity();
