@@ -30,7 +30,7 @@ import logist.topology.Topology.City;
 @SuppressWarnings("unused")
 public class CentralizedAgent implements CentralizedBehavior {
 
-    enum Algo { TAKERANDOMWITHP }
+    enum Algo { TAKERANDOMWITHP, SIMULATEDANNEALING }
     
     private Topology topology;
     private TaskDistribution distribution;
@@ -38,7 +38,8 @@ public class CentralizedAgent implements CentralizedBehavior {
     private long timeout_setup;
     private long timeout_plan;
     private Algo algorithm;
-    private double parameter;
+    private double parameter1;
+    private double parameter2;
     
     @Override
     public void setup(Topology topology, TaskDistribution distribution,
@@ -61,7 +62,11 @@ public class CentralizedAgent implements CentralizedBehavior {
         algorithm = Algo.valueOf(agent.readProperty("algorithm", String.class, "TakeRandomWithP").toUpperCase());
         switch (algorithm) {
         case TAKERANDOMWITHP: 
-        	parameter = agent.readProperty("probability", Double.class, 0.6);
+        	parameter1 = agent.readProperty("probability", Double.class, 0.6); // TODO: change default values
+        	break;
+        case SIMULATEDANNEALING:
+        	parameter1 = agent.readProperty("temperature-begin", Double.class, 500.);
+        	parameter2 = agent.readProperty("temperature-end", Double.class, 200.);
         	break;
         }
         
@@ -93,11 +98,14 @@ public class CentralizedAgent implements CentralizedBehavior {
         // or if best_neighbourg > max take else simmulated annealing
         switch (algorithm) {
         case TAKERANDOMWITHP:
-        	solution = stochasticSearchTakeRandomWithP(solution, parameter, time_limit);
+        	solution = stochasticSearchTakeRandomWithP(solution, parameter1, time_limit);
+        	break;
+        case SIMULATEDANNEALING:
+        	solution = simulatedAnnealing(solution, parameter1, parameter2, time_limit);
         	break;
         }
         
-        
+		System.out.println(solution.cost);
         List<Plan> plans = solution.getPlans(list);
         return plans;
     }
@@ -105,10 +113,10 @@ public class CentralizedAgent implements CentralizedBehavior {
     /* performs the stochastic search, at each stage, with probability p, we take the neighbourgh
      * with best score, with probability 1-p, we take a random new neighbourg
      */
-	Solution stochasticSearchTakeRandomWithP(Solution solution, double probability, long time_limit) {
+	private Solution stochasticSearchTakeRandomWithP(Solution solution, double probability, long timeLimit) {
 		Solution bestCurrentSolution = solution;
 		Random generator = new Random();
-		long time_start = System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
 		
 		// loop body
 		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
@@ -121,8 +129,8 @@ public class CentralizedAgent implements CentralizedBehavior {
     		bestCurrentSolution = solution;
     	}
     	
-    	time_limit -= 3*(System.currentTimeMillis() - time_start);  // adding a safety margin of 3 iterations
-        while (System.currentTimeMillis() < time_limit) {
+    	timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
+        while (System.currentTimeMillis() < timeLimit) {
         	neighbourgs = solution.generateNeighbours();
         	if (generator.nextDouble() < probability) {
         		solution = Collections.min(neighbourgs);
@@ -131,12 +139,45 @@ public class CentralizedAgent implements CentralizedBehavior {
         	}
         	if (solution.cost < bestCurrentSolution.cost) {
         		bestCurrentSolution = solution;
-        	}        	
+        	}   	
         }
-        System.out.println(bestCurrentSolution.cost);
         return bestCurrentSolution;
 	}
 
+	/* performs a simmulated annealing, the temperature is decreased linearly at each iteration
+	 * to be equal to temperatureInit on the first one and temperatureEnd on the last one (approximately)
+	 * 
+	 */
+	private Solution simulatedAnnealing(Solution solution, double temperatureInit, 
+			double temperatureEnd, long timeLimit) {
+		Random generator = new Random();
+		Solution newSol;
+		double temperature = temperatureInit, diffScore;
+		long startTime = System.currentTimeMillis(), deltaTime = timeLimit - startTime;
+		
+		
+		
+		timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
+		
+		for (double currentTime = System.currentTimeMillis(), fractionTimeLeft; currentTime < timeLimit; currentTime = System.currentTimeMillis()) {
+			fractionTimeLeft = (timeLimit - currentTime) / deltaTime;
+			temperature = temperatureInit * fractionTimeLeft + temperatureEnd * (1-fractionTimeLeft); // update the temperature 
+					
+			ArrayList<Solution> neighbourgs = solution.generateNeighbours();
+			newSol = neighbourgs.get(generator.nextInt(neighbourgs.size())); // pick random solution
+			
+			diffScore = newSol.cost - solution.cost;
+			if (diffScore < 0) {
+				solution = newSol;
+			} else if (generator.nextDouble() < Math.exp(- diffScore / temperature)) { // accept with a probability that decreases with the temperature
+				// and that is smaller the worse the new solution is
+				System.out.println(Math.exp(- diffScore / temperature));
+				solution = newSol;
+			}
+        }
+        return solution;
+	}
+	
     private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
         City current = vehicle.getCurrentCity();
         Plan plan = new Plan(current);

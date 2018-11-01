@@ -7,8 +7,16 @@
 	<agent name="centralized-main">
 		<set class-path="bin/"/>
 		<set class-name="centralized.CentralizedAgent"/>
+		<set algorithm="SimulatedAnnealing" />
+		<set temperature-begin="1000."/>
+		<set temperature-end="300." />
+	</agent>
+	
+	<agent name="centralized-main1">
+		<set class-path="bin/"/>
+		<set class-name="centralized.CentralizedAgent"/>
 		<set algorithm="TakeRandomWithP" />
-		<set probability=".99"/>
+		<set probability=".95"/>
 	</agent>
 	
 </agents>
