@@ -142,10 +142,10 @@ public class Solution implements Cloneable, Comparable<Solution> {
 			v1 = generator.nextInt(nbrVehicles);
 			next = nextTask[nbrTasks+v1];
 			iter += 1;
-		} while ((next == -1 || nextTask[nextTask[next]] == -1) && iter < nbrVehicles); // find a vehicle with at least four tasks (two times pickup and delivery)
-		// we stop after having tried nbrVehicles times since a vehicle with at lest four tasks might not exist
+		} while ((next == -1 || nextTask[nextTask[next]] == -1) && iter < 2*nbrVehicles); // find a vehicle with at least four tasks (two times pickup and delivery)
+		// we stop after having tried 2*nbrVehicles times since a vehicle with at lest four tasks might not exist
 		
-		if (next != -1) {  // if we found a vehicle 
+		if (next != -1 && nextTask[nextTask[next]] != -1) {  // if we found a vehicle 
 			for (int i = nbrTasks+v1; nextTask[i] != -1; i = nextTask[i], nbrTasksVehicle++) {} // counts the nbr of tasks of a vehicle
 	
 			int[] timeVehicle = new int[nbrTasksVehicle];  // If task t (index in nextTask) is executed as i'th task by vehicle v, we will have value t at index i
@@ -169,6 +169,14 @@ public class Solution implements Cloneable, Comparable<Solution> {
 				}
 			}
 			appendchangingTaskOrderToN(Neighbourgs, v1, pickupTOffset, deliveryTOffset, timeVehicle, remainingCapacity);
+			
+			// we swap two tasks in the same vehicle:
+			offsetPickup = generator.nextInt(nbrTasksVehicle/2);
+			int offsetPickup2 = generator.nextInt(nbrTasksVehicle/2);
+			while (offsetPickup2 == offsetPickup) {
+				offsetPickup2 = generator.nextInt(nbrTasksVehicle/2);
+			}
+			appendSwapTwoTasksToN(Neighbourgs, v1, offsetPickup, offsetPickup2, timeVehicle);
 		}
 		return Neighbourgs;
 	}
@@ -294,6 +302,82 @@ public class Solution implements Cloneable, Comparable<Solution> {
 					N.add(newSol);
 				}
 			}
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * swaps two tasks (pickup1 <-> pickup2 and delivery1 <-> delivery2) and the new solution to N if it
+	 * is valid
+	 * 
+	 * @param N: the arraylist we will append the new solution to
+	 * @param v: index of the vehicle inside of which tasks will be swapped
+	 * @param offsetPickup1: number of pickup the vehicle did before picking up task 1
+	 * @param offsetPickup2: number of pickup the vehicle did before picking up task 2
+	 * @param timeVehicle: array whose index are the time offsets and elements the tasks happening at these offsets
+	 */
+	private void appendSwapTwoTasksToN(ArrayList<Solution> N, int v, int offsetPickup1, int offsetPickup2, int[] timeVehicle) {
+		try {
+			int offsetTPickup1 = -1, offsetTPickup2 = -1, offsetTDeliver1 = -1, offsetTDeliver2 = -1;
+			
+			// find the given tasks
+			for(int i = 0; i < timeVehicle.length; i++) { 
+				if (timeVehicle[i] % 2 == 0) {
+					if (offsetPickup1-- == 0) {
+						offsetTPickup1 = i;
+					}
+					if (offsetPickup2-- == 0) {
+						offsetTPickup2 = i;
+					}
+				}
+				if (offsetTPickup1 >= 0 && timeVehicle[i] == timeVehicle[offsetTPickup1] + 1) {
+					offsetTDeliver1 = i;
+				} else if (offsetTPickup2 >= 0 && timeVehicle[i] == timeVehicle[offsetTPickup2] + 1) {
+					offsetTDeliver2 = i;
+				}
+			}
+			
+			// swap the tasks, we will reconstruct the 
+			
+			Solution newSol = (Solution) this.clone();
+			for(int task = nbrTasks+v, i = 0; task != -1; task = newSol.nextTask[task], i++) {
+				if (i == offsetTPickup1) { // swap p1 and p2
+					newSol.nextTask[task] = timeVehicle[offsetTPickup2];
+				} else if (i == offsetTPickup2) {
+					newSol.nextTask[task] = timeVehicle[offsetTPickup1];
+				} else if (i == offsetTDeliver1) {
+					newSol.nextTask[task] = timeVehicle[offsetTDeliver2];
+				} else if (i == offsetTDeliver2) {
+					newSol.nextTask[task] = timeVehicle[offsetTDeliver1];
+				} else if (i == timeVehicle.length ){  // we have done our last task
+					newSol.nextTask[task] = -1;
+				} else {
+					newSol.nextTask[task] = timeVehicle[i];
+				}
+			}
+			
+			
+			// check if new solution is valid
+			for(int task = newSol.nextTask[nbrTasks+v], remainingCapacity = vehicleCapacity[v]; task != -1; task = newSol.nextTask[task]) {
+				remainingCapacity -= weight[task];
+				if (remainingCapacity < 0) {
+					break;
+				}
+			}
+			
+			System.out.println("-----");
+			for (int i: nextTask) {
+				System.out.print(i + " ");
+			}
+			System.out.println();
+			for (int i: newSol.nextTask) {
+				System.out.print(i + " ");
+			}
+			System.out.println("\n-----");
+			
+			newSol.computeCost();
+			N.add(newSol);
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 		}
