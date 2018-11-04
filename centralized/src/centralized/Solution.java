@@ -338,8 +338,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 				}
 			}
 			
-			// swap the tasks, we will reconstruct the 
-			
+			// swap the tasks, we will reconstruct the nextTask array from 0 for v1 (simpler that perfomring two swaps)
 			Solution newSol = (Solution) this.clone();
 			for(int task = nbrTasks+v, i = 0; task != -1; task = newSol.nextTask[task], i++) {
 				if (i == offsetTPickup1) { // swap p1 and p2
@@ -365,17 +364,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 					break;
 				}
 			}
-			
-			System.out.println("-----");
-			for (int i: nextTask) {
-				System.out.print(i + " ");
-			}
-			System.out.println();
-			for (int i: newSol.nextTask) {
-				System.out.print(i + " ");
-			}
-			System.out.println("\n-----");
-			
+						
 			newSol.computeCost();
 			N.add(newSol);
 		} catch (CloneNotSupportedException e) {
