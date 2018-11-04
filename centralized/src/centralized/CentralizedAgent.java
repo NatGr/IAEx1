@@ -120,18 +120,23 @@ public class CentralizedAgent implements CentralizedBehavior {
 		
 		// loop body
 		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
-    	if (generator.nextDouble() < probability) {
-    		solution = Collections.min(neighbourgs);
-    	} else {
-    		solution = neighbourgs.get(generator.nextInt(neighbourgs.size()));
-    	}
-    	if (solution.cost < bestCurrentSolution.cost) {
-    		bestCurrentSolution = solution;
-    	}
+		if (neighbourgs.size() > 0) {
+			if (generator.nextDouble() < probability) {
+	    		solution = Collections.min(neighbourgs);
+	    	} else {
+	    		solution = neighbourgs.get(generator.nextInt(neighbourgs.size()));
+	    	}
+	    	if (solution.cost < bestCurrentSolution.cost) {
+	    		bestCurrentSolution = solution;
+	    	}
+		}
     	
     	timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
         while (System.currentTimeMillis() < timeLimit) {
         	neighbourgs = solution.generateNeighbours();
+        	if (neighbourgs.size() == 0) {  // possible if very restrictive constraints
+				continue;
+			}
         	if (generator.nextDouble() < probability) {
         		solution = Collections.min(neighbourgs);
         	} else {
@@ -156,15 +161,16 @@ public class CentralizedAgent implements CentralizedBehavior {
 		long startTime = System.currentTimeMillis(), deltaTime = timeLimit - startTime;
 		
 		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
-        newSol = neighbourgs.get(generator.nextInt(neighbourgs.size())); // pick random solution
-        
-        diffScore = newSol.cost - solution.cost;
-        if (diffScore < 0) {
-            solution = newSol;
-        } else if (generator.nextDouble() < Math.exp(- diffScore / temperature)) { // accept with a probability that decreases with the temperature
-            // and that is smaller the worse the new solution is
-            solution = newSol;
-        }
+		if (neighbourgs.size() > 0) {
+			newSol = neighbourgs.get(generator.nextInt(neighbourgs.size()));  // pick random solution
+			diffScore = newSol.cost - solution.cost;
+	        if (diffScore < 0) {
+	            solution = newSol;
+	        } else if (generator.nextDouble() < Math.exp(- diffScore / temperature)) { // accept with a probability that decreases with the temperature
+	            // and that is smaller the worse the new solution is
+	            solution = newSol;
+	        }
+		}
 		
 		timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
 		
@@ -173,6 +179,9 @@ public class CentralizedAgent implements CentralizedBehavior {
 			temperature = temperatureInit * fractionTimeLeft + temperatureEnd * (1-fractionTimeLeft); // update the temperature 
 					
 			neighbourgs = solution.generateNeighbours();
+			if (neighbourgs.size() == 0) {  // possible if very restrictive constraints
+				continue;
+			}
 			newSol = neighbourgs.get(generator.nextInt(neighbourgs.size())); // pick random solution
 			
 			diffScore = newSol.cost - solution.cost;
