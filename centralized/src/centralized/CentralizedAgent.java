@@ -118,7 +118,7 @@ public class CentralizedAgent implements CentralizedBehavior {
 		Random generator = new Random();
 		long startTime = System.currentTimeMillis();
 		
-		// loop body
+		// loop body os as to evaluate the time of an iteration
 		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
 		if (neighbourgs.size() > 0) {
 			if (generator.nextDouble() < probability) {
@@ -156,7 +156,7 @@ public class CentralizedAgent implements CentralizedBehavior {
 	private Solution simulatedAnnealing(Solution solution, double temperatureInit, 
 			double temperatureEnd, long timeLimit) {
 		Random generator = new Random();
-		Solution newSol;
+		Solution newSol, bestCurrentSolution = solution;
 		double temperature = temperatureInit, diffScore;
 		long startTime = System.currentTimeMillis(), deltaTime = timeLimit - startTime;
 		
@@ -170,6 +170,9 @@ public class CentralizedAgent implements CentralizedBehavior {
 	            // and that is smaller the worse the new solution is
 	            solution = newSol;
 	        }
+	        if (solution.cost < bestCurrentSolution.cost) {
+	    		bestCurrentSolution = solution;
+	    	}
 		}
 		
 		timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
@@ -192,8 +195,11 @@ public class CentralizedAgent implements CentralizedBehavior {
 				//System.out.println(Math.exp(- diffScore / temperature)); TODO: remove
 				solution = newSol;
 			}
+			if (solution.cost < bestCurrentSolution.cost) {
+	    		bestCurrentSolution = solution;
+	    	}
         }
-        return solution;
+        return bestCurrentSolution;
 	}
 	
     private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
