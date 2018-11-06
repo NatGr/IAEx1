@@ -40,6 +40,7 @@ public class CentralizedAgent implements CentralizedBehavior {
     private Algo algorithm;
     private double parameter1;
     private double parameter2;
+    private int nrIterations = 0;
     
     @Override
     public void setup(Topology topology, TaskDistribution distribution,
@@ -144,8 +145,10 @@ public class CentralizedAgent implements CentralizedBehavior {
         	}
         	if (solution.cost < bestCurrentSolution.cost) {
         		bestCurrentSolution = solution;
-        	}   	
+        	}   
+        	nrIterations++;
         }
+        System.out.println("Number of iterations: "+nrIterations);
         return bestCurrentSolution;
 	}
 
@@ -155,6 +158,7 @@ public class CentralizedAgent implements CentralizedBehavior {
 	 */
 	private Solution simulatedAnnealing(Solution solution, double temperatureInit, 
 			double temperatureEnd, long timeLimit) {
+		int iterations_best = 0;
 		Random generator = new Random();
 		Solution newSol, bestCurrentSolution = solution;
 		double temperature = temperatureInit, diffScore;
@@ -197,8 +201,13 @@ public class CentralizedAgent implements CentralizedBehavior {
 			}
 			if (solution.cost < bestCurrentSolution.cost) {
 	    		bestCurrentSolution = solution;
+	    		iterations_best = nrIterations;
 	    	}
+			nrIterations++;
         }
+        System.out.println("Number of iterations: "+nrIterations);
+        System.out.println("Number of iterations for best solution: "+iterations_best);
+
         return bestCurrentSolution;
 	}
 	

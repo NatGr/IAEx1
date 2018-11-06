@@ -3,9 +3,11 @@ package centralized;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import logist.plan.Action;
 import logist.plan.Plan;
 import logist.simulation.Vehicle;
 import logist.task.Task;
@@ -372,13 +374,13 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		}
 	}
 
-	/*
-	 * return the list of plans associated with the solution
-	 * 
-	 * @param tasks: the list of tasks that were given as arguments to the constructor we come from
-	 * tasks is of type ArrayList to guarantee O(1) access
+	
+	/**
+	 * @param tasks: the list of tasks that were given as arguments to the constructor we come from tasks is of type ArrayList to guarantee O(1) access
+	 * @return the list of plans associated with the solution
 	 */
 	public List<Plan> getPlans(ArrayList<Task> tasks) {
+		ArrayList<Double> distances = new ArrayList<Double>();
 		System.out.println("-----");
 		for (int i: nextTask) {
 			System.out.print(i + " ");
@@ -386,9 +388,11 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		System.out.println("\n-----");
 		List<Plan> plans = new ArrayList<Plan>();
         for (int i = nbrTasks; i < nextTask.length; i++) {
+        	distances.add(new Double(0));
         	Plan plan = new Plan(city[i]);
         	City prevCity = city[i];
         	for (int j = nextTask[i]; j != -1; prevCity = city[j], j = nextTask[j]) {
+        		distances.set(i-nbrTasks, (distances.get(i-nbrTasks)+prevCity.distanceTo(city[j])));
         		for (City city : prevCity.pathTo(city[j])) {
 					plan.appendMove(city);
 				}
@@ -399,11 +403,18 @@ public class Solution implements Cloneable, Comparable<Solution> {
         		}
         	}
         	plans.add(plan);
+        	
+        }
+        for (int i = 0; i < distances.size(); i++) {
+        	System.out.println("Distance for vehicle "+i+": "+distances.get(i));
         }
 		return plans;
 	}
 	
-	// computes the score of the solution
+
+	/**
+	 * Computes the score of the solution
+	 */
 	private void computeCost() {
 		cost = 0;
 		for (int i = 0, vehicleDrivenDistance, offset; i < nbrVehicles; i++) {
@@ -417,14 +428,23 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		}
 	}
 	
-	// clone method that performs a deep cloning of the array nextTask
+
+	/* 
+	 * clone method that performs a deep cloning of the array nextTask
+	 */
 	public Object clone() throws CloneNotSupportedException {
 		Solution clone = (Solution) super.clone();
 		clone.nextTask = Arrays.copyOf(clone.nextTask, clone.nextTask.length);
 		return clone;
 	}
 	
-	// this has nothin to do with the current class but java doesn't provide the functionnality
+
+	/**
+	 * @param array: array of tasks for which pos i needs to be switched with pos j
+	 * @param i: index of task i
+	 * @param j: index of task j
+	 * This has nothing to do with the current class but java does not provide the functionality
+	 */
 	public static final void swap(int[] array, int i, int j) {
 		int tmp = array[i];
 		array[i] = array[j];

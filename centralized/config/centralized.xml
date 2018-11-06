@@ -19,14 +19,13 @@
 		-->
 		<probability distribution="uniform" min="0.0" max="1.0" />
 		<reward distribution="constant" policy="short-distances" min="100" max="99999" />
-		<weight distribution="constant" value="3" />
+		<weight distribution="constant" value="1" />
 
 	</tasks>
 	
 	<!-- the companies and vehicles in the simulation -->
 	<companies>
-		<company name="Company A">
-			
+		<company name="Company A">			
 			<!-- the first vehicle (blue) -->
 			<vehicle name="Vehicle 1">
 				<set color="#0000ff" />

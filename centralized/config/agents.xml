@@ -4,19 +4,19 @@
 	<!-- A list of agents and their behavior classes -->
 	
 	<!-- #### CENTRALIZED AGENTS ### -->
-	<agent name="centralized-main1">
+	<agent name="centralized-annealing">
 		<set class-path="bin/"/>
 		<set class-name="centralized.CentralizedAgent"/>
 		<set algorithm="SimulatedAnnealing" />
 		<set temperature-begin="1000."/>
-		<set temperature-end="300." />
+		<set temperature-end="100." />
 	</agent>
 	
-	<agent name="centralized-main">
+	<agent name="centralized-randomP">
 		<set class-path="bin/"/>
 		<set class-name="centralized.CentralizedAgent"/>
 		<set algorithm="TakeRandomWithP" />
-		<set probability=".95"/>
+		<set probability="0.999"/>
 	</agent>
 	
 </agents>
