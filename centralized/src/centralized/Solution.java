@@ -363,7 +363,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 			for(int task = newSol.nextTask[nbrTasks+v], remainingCapacity = vehicleCapacity[v]; task != -1; task = newSol.nextTask[task]) {
 				remainingCapacity -= weight[task];
 				if (remainingCapacity < 0) {
-					break;
+					return;
 				}
 			}
 						
