@@ -378,7 +378,6 @@ public class Solution implements Cloneable, Comparable<Solution> {
 	 * @return the list of plans associated with the solution
 	 */
 	public List<Plan> getPlans(ArrayList<Task> tasks) {
-		ArrayList<Double> distances = new ArrayList<Double>();
 		System.out.println("-----");
 		for (int i: nextTask) {
 			System.out.print(i + " ");
@@ -386,11 +385,9 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		System.out.println("\n-----");
 		List<Plan> plans = new ArrayList<Plan>();
         for (int i = nbrTasks; i < nextTask.length; i++) {
-        	distances.add(new Double(0));
         	Plan plan = new Plan(city[i]);
         	City prevCity = city[i];
         	for (int j = nextTask[i]; j != -1; prevCity = city[j], j = nextTask[j]) {
-        		distances.set(i-nbrTasks, (distances.get(i-nbrTasks)+prevCity.distanceTo(city[j])));
         		for (City city : prevCity.pathTo(city[j])) {
 					plan.appendMove(city);
 				}
@@ -402,9 +399,6 @@ public class Solution implements Cloneable, Comparable<Solution> {
         	}
         	plans.add(plan);
         	
-        }
-        for (int i = 0; i < distances.size(); i++) {
-        	System.out.println("Distance for vehicle "+i+": "+distances.get(i));
         }
 		return plans;
 	}

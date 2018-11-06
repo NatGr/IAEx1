@@ -40,7 +40,6 @@ public class CentralizedAgent implements CentralizedBehavior {
     private Algo algorithm;
     private double parameter1;
     private double parameter2;
-    private int nrIterations = 0;
     
     @Override
     public void setup(Topology topology, TaskDistribution distribution,
@@ -146,9 +145,7 @@ public class CentralizedAgent implements CentralizedBehavior {
         	if (solution.cost < bestCurrentSolution.cost) {
         		bestCurrentSolution = solution;
         	}   
-        	nrIterations++;
         }
-        System.out.println("Number of iterations: "+nrIterations);
         return bestCurrentSolution;
 	}
 
@@ -160,12 +157,16 @@ public class CentralizedAgent implements CentralizedBehavior {
 			double temperatureEnd, long timeLimit) {
 		int iterations_best = 0;
 		Random generator = new Random();
-		Solution newSol, bestCurrentSolution = solution;
+		Solution newSol, bestCurrentSolution = solution, bestNeighborhoodSol;
 		double temperature = temperatureInit, diffScore;
 		long startTime = System.currentTimeMillis(), deltaTime;
 		
 		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
 		if (neighbourgs.size() > 0) {
+			bestNeighborhoodSol = Collections.min(neighbourgs);
+			if (bestNeighborhoodSol.cost < bestCurrentSolution.cost) {
+	    		bestCurrentSolution = bestNeighborhoodSol;
+	    	}
 			newSol = neighbourgs.get(generator.nextInt(neighbourgs.size()));  // pick random solution
 			diffScore = newSol.cost - solution.cost;
 	        if (diffScore < 0) {
@@ -174,9 +175,6 @@ public class CentralizedAgent implements CentralizedBehavior {
 	            // and that is smaller the worse the new solution is
 	            solution = newSol;
 	        }
-	        if (solution.cost < bestCurrentSolution.cost) {
-	    		bestCurrentSolution = solution;
-	    	}
 		}
 		
 		timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
@@ -190,23 +188,20 @@ public class CentralizedAgent implements CentralizedBehavior {
 			if (neighbourgs.size() == 0) {  // possible if very restrictive constraints
 				continue;
 			}
+			bestNeighborhoodSol = Collections.min(neighbourgs);
+			if (bestNeighborhoodSol.cost < bestCurrentSolution.cost) {
+	    		bestCurrentSolution = bestNeighborhoodSol;
+	    	}
 			newSol = neighbourgs.get(generator.nextInt(neighbourgs.size())); // pick random solution
 			
 			diffScore = newSol.cost - solution.cost;
-			if (diffScore < 0) {
+			if (diffScore <= 0) {
 				solution = newSol;
 			} else if (generator.nextDouble() < Math.exp(- diffScore / temperature)) { // accept with a probability that decreases with the temperature
 				// and that is smaller the worse the new solution is
 				solution = newSol;
 			}
-			if (solution.cost < bestCurrentSolution.cost) {
-	    		bestCurrentSolution = solution;
-	    		iterations_best = nrIterations;
-	    	}
-			nrIterations++;
         }
-        System.out.println("Number of iterations: "+nrIterations);
-        System.out.println("Number of iterations for best solution: "+iterations_best);
 
         return bestCurrentSolution;
 	}
