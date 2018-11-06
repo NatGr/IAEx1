@@ -4,7 +4,7 @@
 	<!-- A list of agents and their behavior classes -->
 	
 	<!-- #### CENTRALIZED AGENTS ### -->
-	<agent name="centralized-annealing">
+	<agent name="centralized-main">
 		<set class-path="bin/"/>
 		<set class-name="centralized.CentralizedAgent"/>
 		<set algorithm="SimulatedAnnealing" />
@@ -16,7 +16,7 @@
 		<set class-path="bin/"/>
 		<set class-name="centralized.CentralizedAgent"/>
 		<set algorithm="TakeRandomWithP" />
-		<set probability="0.999"/>
+		<set probability="0.95"/>
 	</agent>
 	
 </agents>

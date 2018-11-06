@@ -22,8 +22,8 @@
 	<set color-route="#99aabb" />
 
 	<!-- Timeouts -->
-	<set timeout-setup="1000" />
-	<set timeout-bid="1000" />
-	<set timeout-plan="1000" />
+	<set timeout-setup="10000" />
+	<set timeout-bid="10000" />
+	<set timeout-plan="10000" />
 
 </settings>

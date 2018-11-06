@@ -63,11 +63,11 @@ public class CentralizedAgent implements CentralizedBehavior {
         algorithm = Algo.valueOf(agent.readProperty("algorithm", String.class, "TakeRandomWithP").toUpperCase());
         switch (algorithm) {
         case TAKERANDOMWITHP: 
-        	parameter1 = agent.readProperty("probability", Double.class, 0.6); // TODO: change default values
+        	parameter1 = agent.readProperty("probability", Double.class, 0.95);
         	break;
         case SIMULATEDANNEALING:
-        	parameter1 = agent.readProperty("temperature-begin", Double.class, 500.);
-        	parameter2 = agent.readProperty("temperature-end", Double.class, 200.);
+        	parameter1 = agent.readProperty("temperature-begin", Double.class, 1000.);
+        	parameter2 = agent.readProperty("temperature-end", Double.class, 100.);
         	break;
         }
         
@@ -162,7 +162,7 @@ public class CentralizedAgent implements CentralizedBehavior {
 		Random generator = new Random();
 		Solution newSol, bestCurrentSolution = solution;
 		double temperature = temperatureInit, diffScore;
-		long startTime = System.currentTimeMillis(), deltaTime = timeLimit - startTime;
+		long startTime = System.currentTimeMillis(), deltaTime;
 		
 		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
 		if (neighbourgs.size() > 0) {
@@ -180,7 +180,8 @@ public class CentralizedAgent implements CentralizedBehavior {
 		}
 		
 		timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
-		
+		deltaTime = timeLimit - startTime;
+				
 		for (double currentTime = System.currentTimeMillis(), fractionTimeLeft; currentTime < timeLimit; currentTime = System.currentTimeMillis()) {
 			fractionTimeLeft = (timeLimit - currentTime) / deltaTime;
 			temperature = temperatureInit * fractionTimeLeft + temperatureEnd * (1-fractionTimeLeft); // update the temperature 
@@ -196,7 +197,6 @@ public class CentralizedAgent implements CentralizedBehavior {
 				solution = newSol;
 			} else if (generator.nextDouble() < Math.exp(- diffScore / temperature)) { // accept with a probability that decreases with the temperature
 				// and that is smaller the worse the new solution is
-				//System.out.println(Math.exp(- diffScore / temperature)); TODO: remove
 				solution = newSol;
 			}
 			if (solution.cost < bestCurrentSolution.cost) {
