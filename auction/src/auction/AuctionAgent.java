@@ -103,23 +103,14 @@ public class AuctionAgent implements AuctionBehavior {
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
-		
-		if (agent.vehicles().size() != vehicles.size() || this.tasks.size() != tasks.size()) {
-			System.err.println(this.tasks.size());
-			System.err.println(tasks.size());
-			throw new RuntimeException("the plan method was called with an incompatible vehicle or tasks size");
-		}
-
-		/* assuming we have a confortable time to compute the plan, we will try to find a best solution
-		 *  with our final set of tasks and vehicles */
 		long timeOut = System.currentTimeMillis() + (long) (0.999*planTimeLimit) - 25;
 		// 0.999 for safety + 25ms for the plan computing
-		Solution newSol = mlc.getSolution(this.tasks, timeOut);
-				
-		if (newSol.cost < prevSol.cost) {
-			return newSol.getPlans(this.tasks);
-		} else {
-			return prevSol.getPlans(this.tasks);
-		}
+		
+		ArrayList<Task> list = new ArrayList<Task>();
+        for (Task task: tasks) {
+        	list.add(task);
+        }
+		Solution newSol = mlc.getSolution(list, timeOut);
+		return newSol.getPlans(list);
 	}
 }
