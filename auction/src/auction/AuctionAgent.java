@@ -53,7 +53,7 @@ public class AuctionAgent implements AuctionBehavior {
 		
 		LogistSettings ls = null;
         try {
-            ls = Parsers.parseSettings("config" + File.separator + "settings_default.xml");
+            ls = Parsers.parseSettings("config" + File.separator + "settings_auction.xml");
         }
         catch (Exception exc) {
             System.out.println("There was a problem loading the configuration file.");
@@ -74,7 +74,6 @@ public class AuctionAgent implements AuctionBehavior {
 		bidHistory.add(bidsCopy);
 		
 		if (winner == agent.id()) {
-			tasks.add(previous);
 			this.prevSol = this.newSolWithTask;
 		} else {
 			this.tasks.remove(tasks.size()-1);  // we remove the task from our 
@@ -106,6 +105,8 @@ public class AuctionAgent implements AuctionBehavior {
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
 		
 		if (agent.vehicles().size() != vehicles.size() || this.tasks.size() != tasks.size()) {
+			System.err.println(this.tasks.size());
+			System.err.println(tasks.size());
 			throw new RuntimeException("the plan method was called with an incompatible vehicle or tasks size");
 		}
 
