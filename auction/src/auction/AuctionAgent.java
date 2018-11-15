@@ -30,7 +30,7 @@ public class AuctionAgent implements AuctionBehavior {
 	private Solution newSolWithTask;  // new solution if we get the task we bid for
 	private long planTimeLimit;
 	private long bidTimeLimit;
-	private int maxVehicleCapacity = 0;
+	private int maxVehicleCapacity = 0; //Capacity of the largest vehicle of the agent
 	private List<Long[]> bidHistory;  // List of array containing the history of the bids
 	// our bids are put at the first position
 
@@ -53,7 +53,7 @@ public class AuctionAgent implements AuctionBehavior {
 		
 		LogistSettings ls = null;
         try {
-            ls = Parsers.parseSettings("config" + File.separator + "settings_default.xml");
+            ls = Parsers.parseSettings("config" + File.separator + "settings_auction.xml");
         }
         catch (Exception exc) {
             System.out.println("There was a problem loading the configuration file.");
