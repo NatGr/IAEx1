@@ -13,4 +13,13 @@
 		<set temperature-end="100." />
 	</agent>
 	
+	<agent name="auction-dummy">
+		<set class-path="bin/"/>
+		<set class-name="auction.AuctionDummy"/>
+		
+		<set search-algorithm="SimulatedAnnealing" />
+		<set temperature-begin="1000."/>
+		<set temperature-end="100." />
+	</agent>
+	
 </agents>

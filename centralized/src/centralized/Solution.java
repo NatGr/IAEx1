@@ -21,19 +21,25 @@ public class Solution implements Cloneable, Comparable<Solution> {
 	// (delivery), Vehicle_0, ..., Vehicle_m]
 	private final int[] vehicleCapacity; // initial capacity of every vehicle
 	private final int[] vehicleCostPerKm; // cost per Km of every vehicle
+	private Random generator;
+	private double pChangeVehicle = 0.05, pChangeOrder = 0.95; /* probabilities to chose the neighbourgh from the first or second way of generating
+	a neighbourgh, the probability to be in appendchangingTaskOrderToN is of pChangeOrder-pChangeVehicle */
+	private double pPickingEarly = 0.15, pPickingLate = 0.5, pDeliveringEarly = 0.85; // same as above but for the subtypes of newSolutions from appendchangingTaskOrderToN
+	private int[] nbrTasksVehicles; // number of tasks for each vehicle
 
 	// solution characteristics:
 	int[] nextTask; // on position i, you find the offset of the next Task or -1 if the next Task is null
 	// that array is orderer by : [Task_0 (pickup), Task_0 (delivery), ..., Task_n
 	// (delivery), Vehicle_0, ..., Vehicle_m]
 	double cost; // cost of the current solution
+	
 
 	/*
 	 * initializes all problem variables and generates a first valid solution if
 	 * there are tasks that no vehicle is able to carry, the problem is unsolvable
 	 * and we throw an IllegalArgumentException
 	 */	
-	public Solution(List<Task> tasks, List<Vehicle> vehicles, long seed) throws IllegalArgumentException {
+	public Solution(List<Task> tasks, List<Vehicle> vehicles) throws IllegalArgumentException {
 		//Initialization		
 		nbrVehicles = vehicles.size();
 		nbrTasks = 2 * tasks.size();
@@ -41,9 +47,11 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		city = new City[nbrTasks + nbrVehicles];
 		vehicleCapacity = new int[nbrVehicles];
 		vehicleCostPerKm = new int[nbrVehicles];
+		nbrTasksVehicles = new int[nbrVehicles];
 		nextTask = new int[nbrTasks + nbrVehicles];
 		Arrays.fill(nextTask, -1); // default value is "next task is null"
 		int maxCapacity = Integer.MIN_VALUE; //Maximum capacity among all vehicles
+		generator = new Random();
 		
 		//Vehicle specific initialization
 		for (int i = 0; i < nbrVehicles; i++) {
@@ -70,7 +78,6 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		 */
 		
 		//Create relation between position of vehicle in nextTask array and (vehicleCapacity, vehicleCostPerKm)
-		Random generator = new Random(seed);
 		int[] nextTaskVehicle = new int[nbrVehicles]; // array containing the number of vehicles
 		for (int i = 0; i < nbrVehicles; i++) {
 			nextTaskVehicle[i] = nbrTasks + i; // offset in the nextTask array
@@ -89,6 +96,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 					nextTask[nextTaskVehicle[vehicle]] = 2 * i; // pickup task i
 					nextTask[2 * i] = 2 * i + 1; // delivering task i
 					nextTaskVehicle[vehicle] = 2 * i + 1;
+					nbrTasksVehicles[vehicle] += 2;  // vehicle now carry two additionnal tasks 
 					break;
 				}
 			} while (true);
@@ -104,79 +112,82 @@ public class Solution implements Cloneable, Comparable<Solution> {
 	 */
 	public ArrayList<Solution> generateNeighbours() {
 		ArrayList<Solution> Neighbourgs = new ArrayList<Solution>();
-		Random generator = new Random();
-		
-		// moving tasks from a vehicle to another
-		int v1;
-		do {
-			v1 = generator.nextInt(nbrVehicles);
-		} while(nextTask[nbrTasks+v1] == -1);  // find a vehicle with at least two tasks (pickup and delivery)
-		
-		// find a pickup and delivery task at a random offset
-		int nbrTasksVehicle = 0, beforePickup = -1, offsetPickup;
-		for (int i = nbrTasks+v1; nextTask[i] != -1; i = nextTask[i], nbrTasksVehicle++) {} // counts the nbr of tasks of a vehicle
-		offsetPickup = generator.nextInt(nbrTasksVehicle/2);
-		
-		for (int task = nbrTasks+v1; task != -1; task = nextTask[task]) {
-			if (nextTask[task] % 2 == 0 && offsetPickup-- == 0) { // if we have a pickup task, we check if we will move that one and then we decrease offsetPickup
-				beforePickup = task;
-				break;
-			}
-		}
-		
-		for (int v2 = 0; v2 < nbrVehicles; v2++) {
-			if (v2 != v1) {
-				if (weight[nextTask[beforePickup]] <= vehicleCapacity[v2]) {
-					/*
-					 * Check with vehicleCapacity instead of remainingCapacity because the delivery happens immediatly after pickup
-					 * */
-					appendchangingVehicleToN(Neighbourgs, v1, v2, beforePickup);
-				}
-			}
-		}
-		
-		// moving tasks order inside of a vehicle
-		int next, iter = 0;
-		nbrTasksVehicle = 0;
-		do {
-			v1 = generator.nextInt(nbrVehicles);
-			next = nextTask[nbrTasks+v1];
-			iter += 1;
-		} while ((next == -1 || nextTask[nextTask[next]] == -1) && iter < 2*nbrVehicles); // find a vehicle with at least four tasks (two times pickup and delivery)
-		// we stop after having tried 2*nbrVehicles times since a vehicle with at lest four tasks might not exist
-		
-		if (next != -1 && nextTask[nextTask[next]] != -1) {  // if we found a vehicle 
-			for (int i = nbrTasks+v1; nextTask[i] != -1; i = nextTask[i], nbrTasksVehicle++) {} // counts the nbr of tasks of a vehicle
-	
-			int[] timeVehicle = new int[nbrTasksVehicle];  // If task t (index in nextTask) is executed as i'th task by vehicle v, we will have value t at index i
-			int[] remainingCapacity = new int[nbrTasksVehicle];  // At index i, you have the remaining capacity after executing task i
-			int task = nextTask[nbrTasks+v1], pickupTOffset = -1, deliveryTOffset = -1;
-			offsetPickup = generator.nextInt(nbrTasksVehicle/2);  // number of Pickup Tasks we will see before taking the one we will change of vehicle
-			timeVehicle[0] = task;
-			if (offsetPickup-- == 0) {
-				pickupTOffset = 0;
-			}
-			remainingCapacity[0] = vehicleCapacity[v1] - weight[task];
-			task = nextTask[task];
-			for (int i = 1; task != -1; task = nextTask[task], i++) { // fill the timeVehicle 
-				// and remainingCapacity arrays
-				timeVehicle[i] = task;
-				remainingCapacity[i] = remainingCapacity[i-1] - weight[task];
-				if (task % 2 == 0 && offsetPickup-- == 0) { // if we have a pickup task, we check if we will move that one and then we decrease offsetPickup
-					pickupTOffset = i;
-				} else if (pickupTOffset >= 0 && timeVehicle[pickupTOffset]+1 == task) { // we have selected our pickupTask and we can get the corresponding deliveryTask
-					deliveryTOffset = i;
-				}
-			}
-			appendchangingTaskOrderToN(Neighbourgs, v1, pickupTOffset, deliveryTOffset, timeVehicle, remainingCapacity);
+		double proba = generator.nextDouble();
+		int v1;	
+		if (proba < pChangeVehicle) { // moving tasks from a vehicle to another
 			
-			// we swap two tasks in the same vehicle:
-			offsetPickup = generator.nextInt(nbrTasksVehicle/2);
-			int offsetPickup2 = generator.nextInt(nbrTasksVehicle/2);
-			while (offsetPickup2 == offsetPickup) {
-				offsetPickup2 = generator.nextInt(nbrTasksVehicle/2);
+			do {
+				v1 = generator.nextInt(nbrVehicles);
+			} while(nbrTasksVehicles[v1] < 2);  // find a vehicle with at least two tasks
+			
+			// find a pickup and delivery task at a random offset
+			int beforePickup = -1, offsetPickup;
+			offsetPickup = generator.nextInt(nbrTasksVehicles[v1]/2);
+			
+			for (int task = nbrTasks+v1; task != -1; task = nextTask[task]) {
+				if (nextTask[task] % 2 == 0 && offsetPickup-- == 0) { // if we have a pickup task, we check if we will move that one and then we decrease offsetPickup
+					beforePickup = task;
+					break;
+				}
 			}
-			appendSwapTwoTasksToN(Neighbourgs, v1, offsetPickup, offsetPickup2, timeVehicle);
+			for (int v2 = 0; v2 < nbrVehicles; v2++) {
+				if (v2 != v1) {
+					if (weight[nextTask[beforePickup]] <= vehicleCapacity[v2]) {
+						/*
+						 * Check with vehicleCapacity instead of remainingCapacity because the delivery happens immediatly after pickup
+						 * */
+						appendchangingVehicleToN(Neighbourgs, v1, v2, beforePickup);
+					}
+				}
+			}
+		} else {
+			int iter = 0, offsetPickup;
+			do {
+				v1 = generator.nextInt(nbrVehicles);
+				iter += 1;
+			} while (nbrTasksVehicles[v1] < 4 && iter < 2*nbrVehicles); // find a vehicle with at least four tasks (two times pickup and delivery)
+			// we stop after having tried 2*nbrVehicles times since a vehicle with at lest four tasks might not exist
+			
+			if (nbrTasksVehicles[v1] >= 4) {  // if we found a vehicle 
+				int nbrTasksVehicle = nbrTasksVehicles[v1];
+				
+				if (proba < pChangeOrder) { // moving tasks order inside of a vehicle
+					int[] timeVehicle = new int[nbrTasksVehicle];  // If task t (index in nextTask) is executed as i'th task by vehicle v, we will have value t at index i
+					int[] remainingCapacity = new int[nbrTasksVehicle];  // At index i, you have the remaining capacity after executing task i
+					int task = nextTask[nbrTasks+v1], pickupTOffset = -1, deliveryTOffset = -1;
+					offsetPickup = generator.nextInt(nbrTasksVehicle/2);  // number of Pickup Tasks we will see before taking the one we will change of vehicle
+					timeVehicle[0] = task;
+					if (offsetPickup-- == 0) {
+						pickupTOffset = 0;
+					}
+					remainingCapacity[0] = vehicleCapacity[v1] - weight[task];
+					task = nextTask[task];
+					for (int i = 1; task != -1; task = nextTask[task], i++) { // fill the timeVehicle 
+						// and remainingCapacity arrays
+						timeVehicle[i] = task;
+						remainingCapacity[i] = remainingCapacity[i-1] - weight[task];
+						if (task % 2 == 0 && offsetPickup-- == 0) { // if we have a pickup task, we check if we will move that one and then we decrease offsetPickup
+							pickupTOffset = i;
+						} else if (pickupTOffset >= 0 && timeVehicle[pickupTOffset]+1 == task) { // we have selected our pickupTask and we can get the corresponding deliveryTask
+							deliveryTOffset = i;
+						}
+					}
+					appendchangingTaskOrderToN(Neighbourgs, v1, pickupTOffset, deliveryTOffset, timeVehicle, remainingCapacity);
+					
+				} else { // we swap two tasks in the same vehicle:
+					int[] timeVehicle = new int[nbrTasksVehicle];
+					for (int i = 0, task = nextTask[nbrTasks+v1]; task != -1; task = nextTask[task], i++) { // fill the timeVehicle 
+						timeVehicle[i] = task;
+					}
+					
+					offsetPickup = generator.nextInt(nbrTasksVehicle/2);
+					int offsetPickup2 = generator.nextInt(nbrTasksVehicle/2);
+					while (offsetPickup2 == offsetPickup) {
+						offsetPickup2 = generator.nextInt(nbrTasksVehicle/2);
+					}
+					appendSwapTwoTasksToN(Neighbourgs, v1, offsetPickup, offsetPickup2, timeVehicle);
+				}
+			}
 		}
 		return Neighbourgs;
 	}
@@ -212,6 +223,11 @@ public class Solution implements Cloneable, Comparable<Solution> {
 			newSol.nextTask[nbrTasks + v2] = pickup;
 			newSol.nextTask[pickup] = delivery;
 			newSol.nextTask[delivery] = nextTask[nbrTasks + v2];  // the previously first task of v2
+			
+			newSol.nbrTasksVehicles = Arrays.copyOf(this.nbrTasksVehicles, this.nbrTasksVehicles.length);  // done here and not in clone since we don't update it each time
+			newSol.nbrTasksVehicles[v1] -= 2;
+			newSol.nbrTasksVehicles[v2] += 2;
+			
 			newSol.computeCost();  // we shall not forget to update the score of newSol
 			N.add(newSol); 
 		} catch (CloneNotSupportedException e) {
@@ -236,70 +252,74 @@ public class Solution implements Cloneable, Comparable<Solution> {
 	 */
 	private void appendchangingTaskOrderToN(ArrayList<Solution> N, int v, int pickupTOffset, int deliveryTOffset,
 			int[] timeVehicle, int[] remainingCapacity) {
+		
+		double proba = generator.nextDouble();
 		int pickup = timeVehicle[pickupTOffset], delivery = timeVehicle[deliveryTOffset];
 		int prevPickup = (pickupTOffset == 0) ? nbrTasks+v : timeVehicle[pickupTOffset - 1];
 		try {
-			/* pickuing up earlier, we can prepone the picking up from one element iteratively
-			 * as long as we don't go before a deliveryTask A such that we could not have picked
-			 * up our task before delivering A
-			*/
-			for(int i = pickupTOffset - 1; i >= 0; i--) {
-				if (timeVehicle[i] % 2 == 1 && remainingCapacity[i-1] < weight[pickup]) {
-					break;
-				} else {  // we can pickup one step earlier
-					Solution newSol = (Solution) this.clone();
-					if (i == 0) { // we will place the pickup first
-						newSol.nextTask[nbrTasks+v] = pickup;
-						newSol.nextTask[pickup] = nextTask[nbrTasks+v];
-					} else {
-						newSol.nextTask[timeVehicle[i-1]] = pickup;
-						newSol.nextTask[pickup] = timeVehicle[i];
+			if (proba < pPickingEarly) {
+				/* pickuing up earlier, we can prepone the picking up from one element iteratively
+				 * as long as we don't go before a deliveryTask A such that we could not have picked
+				 * up our task before delivering A
+				*/
+				for(int i = pickupTOffset - 1; i >= 0; i--) {
+					if (timeVehicle[i] % 2 == 1 && remainingCapacity[i-1] < weight[pickup]) {
+						break;
+					} else {  // we can pickup one step earlier
+						Solution newSol = (Solution) this.clone();
+						if (i == 0) { // we will place the pickup first
+							newSol.nextTask[nbrTasks+v] = pickup;
+							newSol.nextTask[pickup] = nextTask[nbrTasks+v];
+						} else {
+							newSol.nextTask[timeVehicle[i-1]] = pickup;
+							newSol.nextTask[pickup] = timeVehicle[i];
+						}
+						newSol.nextTask[timeVehicle[pickupTOffset-1]] = timeVehicle[pickupTOffset+1];  // skip pickup
+						newSol.computeCost();
+						N.add(newSol);
 					}
-					newSol.nextTask[timeVehicle[pickupTOffset-1]] = timeVehicle[pickupTOffset+1];  // skip pickup
+				}
+			} else if (proba < pPickingLate) {
+				/* picking up later, we can postpone the pickup as long as we don't pickup our task after
+				 * having delivered it
+				 */
+				for (int i = pickupTOffset + 1; i < deliveryTOffset; i++) {
+					Solution newSol = (Solution) this.clone();
+					newSol.nextTask[prevPickup] = nextTask[pickup];
+					newSol.nextTask[timeVehicle[i]] = pickup;
+					newSol.nextTask[pickup] = timeVehicle[i+1];
 					newSol.computeCost();
 					N.add(newSol);
 				}
-			}
-			
-			/* picking up later, we can postpone the pickup as long as we don't pickup our task after
-			 * having delivered it
-			 */
-			for (int i = pickupTOffset + 1; i < deliveryTOffset; i++) {
-				Solution newSol = (Solution) this.clone();
-				newSol.nextTask[prevPickup] = nextTask[pickup];
-				newSol.nextTask[timeVehicle[i]] = pickup;
-				newSol.nextTask[pickup] = timeVehicle[i+1];
-				newSol.computeCost();
-				N.add(newSol);
-			}
-			
-			/* delivering earlier, we can prepone the delivery as long as we don't deliver before having
-			 * picked up
-			 */
-			for (int i = deliveryTOffset - 1; i > pickupTOffset; i--) {
-				Solution newSol = (Solution) this.clone();
-				newSol.nextTask[timeVehicle[i-1]] = delivery;
-				newSol.nextTask[timeVehicle[deliveryTOffset-1]] = (deliveryTOffset == timeVehicle.length - 1) ? -1 : timeVehicle[deliveryTOffset+1]; // in case
-				// the delivery is the last task
-				newSol.nextTask[delivery] = timeVehicle[i];
-				newSol.computeCost();
-				N.add(newSol);
-			}
-			
-			/* delivering later, we can postpone the delivery from one element iteratively as
-			 * long as we don't go after a pickup task that we could not have picked up before delivering 
-			 */
-			for (int i = deliveryTOffset + 1; i < timeVehicle.length; i++) {
-				if (timeVehicle[i] % 2 == 0 && remainingCapacity[i] < -weight[delivery]) { // the weight of a 
-					// delivery is defined as a negative number, thus we add a "-"
-					break;
-				} else {
+			} else if (proba < pDeliveringEarly) {
+				/* delivering earlier, we can prepone the delivery as long as we don't deliver before having
+				 * picked up
+				 */
+				for (int i = deliveryTOffset - 1; i > pickupTOffset; i--) {
 					Solution newSol = (Solution) this.clone();
-					newSol.nextTask[timeVehicle[deliveryTOffset-1]] = timeVehicle[deliveryTOffset+1];
-					newSol.nextTask[timeVehicle[i]] = delivery;
-					newSol.nextTask[delivery] = nextTask[timeVehicle[i]];
+					newSol.nextTask[timeVehicle[i-1]] = delivery;
+					newSol.nextTask[timeVehicle[deliveryTOffset-1]] = (deliveryTOffset == timeVehicle.length - 1) ? -1 : timeVehicle[deliveryTOffset+1]; // in case
+					// the delivery is the last task
+					newSol.nextTask[delivery] = timeVehicle[i];
 					newSol.computeCost();
 					N.add(newSol);
+				}
+			} else {
+				/* delivering later, we can postpone the delivery from one element iteratively as
+				 * long as we don't go after a pickup task that we could not have picked up before delivering 
+				 */
+				for (int i = deliveryTOffset + 1; i < timeVehicle.length; i++) {
+					if (timeVehicle[i] % 2 == 0 && remainingCapacity[i] < -weight[delivery]) { // the weight of a 
+						// delivery is defined as a negative number, thus we add a "-"
+						break;
+					} else {
+						Solution newSol = (Solution) this.clone();
+						newSol.nextTask[timeVehicle[deliveryTOffset-1]] = timeVehicle[deliveryTOffset+1];
+						newSol.nextTask[timeVehicle[i]] = delivery;
+						newSol.nextTask[delivery] = nextTask[timeVehicle[i]];
+						newSol.computeCost();
+						N.add(newSol);
+					}
 				}
 			}
 		} catch (CloneNotSupportedException e) {

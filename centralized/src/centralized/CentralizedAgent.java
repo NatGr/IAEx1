@@ -30,11 +30,12 @@ import logist.topology.Topology.City;
 @SuppressWarnings("unused")
 public class CentralizedAgent implements CentralizedBehavior {
 
-    enum Algo { TAKERANDOMWITHP, SIMULATEDANNEALING }
+    enum Algo { TAKERANDOMWITHP, SIMULATEDANNEALING, STOCHASTICRESTART}
     
     private Topology topology;
     private TaskDistribution distribution;
-    private Agent agent;
+    private ArrayList<Task> tasks;
+    private List<Vehicle> vehicles;
     private long timeout_setup;
     private long timeout_plan;
     private Algo algorithm;
@@ -68,40 +69,43 @@ public class CentralizedAgent implements CentralizedBehavior {
         	parameter1 = agent.readProperty("temperature-begin", Double.class, 1000.);
         	parameter2 = agent.readProperty("temperature-end", Double.class, 100.);
         	break;
+        case STOCHASTICRESTART:
+        	parameter1 = agent.readProperty("probability", Double.class, 0.95);
+        	parameter2 = agent.readProperty("threshold", Double.class, 30.);
         }
         
         this.topology = topology;
         this.distribution = distribution;
-        this.agent = agent;
     }
 
     @Override
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
-        long time_limit = System.currentTimeMillis() + (long) (0.999*timeout_plan) - 20;  
+        long time_limit = System.currentTimeMillis() + (long) (0.999*timeout_plan) - 25;  
         // we use a 0.999 factor margin for safety and a 20 ms safety margin for computing
         // the plan
         
-        long SEED = 17;
         ArrayList<Task> list = new ArrayList<Task>();
         for (Task task: tasks) {
         	list.add(task);
         }
-        Solution solution = new Solution(list, vehicles, SEED);
+        this.tasks = list;
+        this.vehicles = vehicles;
+        
+        Solution solution = new Solution(list, vehicles);
         if (list.size() == 0) {  // if we call generateNeighbours for a task with no solutions
         	// we will loop infinitely
         	return solution.getPlans(list);
         }
         
-        // remembers the best
-        // p: one of them, 1-p: another randomly
-        // or same with p decaying
-        // or if best_neighbourg > max take else simmulated annealing
         switch (algorithm) {
         case TAKERANDOMWITHP:
         	solution = stochasticSearchTakeRandomWithP(solution, parameter1, time_limit);
         	break;
         case SIMULATEDANNEALING:
         	solution = simulatedAnnealing(solution, parameter1, parameter2, time_limit);
+        	break;
+        case STOCHASTICRESTART:
+        	solution = stochasticSearchRestart(solution, parameter1, (int) parameter2, time_limit);
         	break;
         }
         
@@ -110,6 +114,48 @@ public class CentralizedAgent implements CentralizedBehavior {
         return plans;
     }
     
+    /* stochastic search with restarts: performs stochastic search
+     * and restarts once the best score doesn't change anymore
+     */
+    private Solution stochasticSearchRestart(Solution solution, double probability, int iterThreshold, long timeLimit) {
+		Solution bestCurrentSolution = solution;
+		Random generator = new Random();
+		long startTime = System.currentTimeMillis();
+		int haventMadeProgressSince = 0, restartPointsMaxSize = 5000;
+		ArrayList<Solution> neighbourgs, restartPoints = new ArrayList<Solution>(restartPointsMaxSize);
+		
+		
+        while (System.currentTimeMillis() < timeLimit) {
+        	neighbourgs = solution.generateNeighbours();
+        	if (neighbourgs.size() == 0) {  // possible if very restrictive constraints
+				continue;
+			}
+        	
+        	if (generator.nextDouble() < probability) {
+        		solution = Collections.min(neighbourgs);
+        	} else {
+        		solution = neighbourgs.get(generator.nextInt(neighbourgs.size()));
+        	}
+        	
+        	if (solution.cost < bestCurrentSolution.cost) {
+        		bestCurrentSolution = solution;
+        		haventMadeProgressSince = 0;
+        	} else {
+        		haventMadeProgressSince++;
+        		if (restartPoints.size() < restartPointsMaxSize && generator.nextDouble() < 0.05) {
+        			restartPoints.add(solution);
+        		}
+        	}
+        	
+        	if (haventMadeProgressSince > iterThreshold) {
+        		solution = restartPoints.get(generator.nextInt(restartPoints.size()));
+        		haventMadeProgressSince = 0;
+        	}
+        }
+        return bestCurrentSolution;
+	}
+    
+    
     /* performs the stochastic search, at each stage, with probability p, we take the neighbourgh
      * with best score, with probability 1-p, we take a random new neighbourg
      */
@@ -117,21 +163,8 @@ public class CentralizedAgent implements CentralizedBehavior {
 		Solution bestCurrentSolution = solution;
 		Random generator = new Random();
 		long startTime = System.currentTimeMillis();
+		ArrayList<Solution> neighbourgs;
 		
-		// loop body os as to evaluate the time of an iteration
-		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
-		if (neighbourgs.size() > 0) {
-			if (generator.nextDouble() < probability) {
-	    		solution = Collections.min(neighbourgs);
-	    	} else {
-	    		solution = neighbourgs.get(generator.nextInt(neighbourgs.size()));
-	    	}
-	    	if (solution.cost < bestCurrentSolution.cost) {
-	    		bestCurrentSolution = solution;
-	    	}
-		}
-    	
-    	timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
         while (System.currentTimeMillis() < timeLimit) {
         	neighbourgs = solution.generateNeighbours();
         	if (neighbourgs.size() == 0) {  // possible if very restrictive constraints
@@ -177,7 +210,6 @@ public class CentralizedAgent implements CentralizedBehavior {
 	        }
 		}
 		
-		timeLimit -= 3*(System.currentTimeMillis() - startTime);  // adding a safety margin of 3 iterations
 		deltaTime = timeLimit - startTime;
 				
 		for (double currentTime = System.currentTimeMillis(), fractionTimeLeft; currentTime < timeLimit; currentTime = System.currentTimeMillis()) {
