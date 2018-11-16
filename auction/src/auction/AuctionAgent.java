@@ -100,6 +100,7 @@ public class AuctionAgent implements AuctionBehavior {
 		double bid = newSolWithTask.cost - prevCost;
 		return (long) Math.round(bid);
 	}
+	
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
