@@ -23,7 +23,7 @@ public class MarginalLossComputer {
         
     	vehicles = agent.vehicles();
     			
-        algorithm = Algo.valueOf(agent.readProperty("algorithm", String.class, "TakeRandomWithP").toUpperCase());
+        algorithm = Algo.valueOf(agent.readProperty("algorithm", String.class, "SIMULATEDANNEALING").toUpperCase());
         switch (algorithm) {
         case TAKERANDOMWITHP: 
         	parameter1 = agent.readProperty("probability", Double.class, 0.95);
@@ -42,6 +42,10 @@ public class MarginalLossComputer {
     public Solution getSolution(ArrayList<Task> tasks, long timeLimit) {
         long SEED = 17;
         Solution solution = new Solution(tasks, this.vehicles, SEED);
+        
+        if (tasks.size() == 0) { // no search to perfom
+        	return solution;
+        }
         
         switch (algorithm) {
         case TAKERANDOMWITHP:

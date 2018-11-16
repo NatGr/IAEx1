@@ -20,7 +20,7 @@ import logist.topology.Topology;
  * An auction agent
  * 
  */
-public class AuctionAgent implements AuctionBehavior {
+public class AuctionDummy implements AuctionBehavior {
 
 	private TaskDistribution distribution;
 	private ArrayList<Task> tasks;
@@ -33,7 +33,7 @@ public class AuctionAgent implements AuctionBehavior {
 	private int maxVehicleCapacity = 0;
 	private List<Long[]> bidHistory;  // List of array containing the history of the bids
 	// our bids are put at the first position
-	private long bidGain = 1000;
+	private double bidGainFactor = 1.45;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
@@ -64,8 +64,8 @@ public class AuctionAgent implements AuctionBehavior {
         this.planTimeLimit = ls.get(LogistSettings.TimeoutKey.PLAN);
         // the bid method cannot execute more than bidTimeLimit milliseconds
         this.bidTimeLimit = ls.get(LogistSettings.TimeoutKey.BID);
-
-        System.out.println("Auction agent always wants a gain " + bidGain);
+        
+        System.out.println("Dummy agent always wants a gain factor of " + bidGainFactor);
 	}
 
 	@Override
@@ -95,12 +95,8 @@ public class AuctionAgent implements AuctionBehavior {
 		long timeOut = System.currentTimeMillis() + (long) (0.999*bidTimeLimit) - 5;
 		// 0.999 for safety + 5ms for the rest of the method
 		this.newSolWithTask = mlc.getSolution(this.tasks, timeOut);
-		
-		// TODO: add time adaptability
-		// TODO: add adaptation to ennemy
-		// TODO; si on a un cout < 0, on peut suremnt le mettre à 0 comme c'est task specific
 
-		double bid = Math.max(1, newSolWithTask.cost - prevCost) + bidGain;
+		double bid = Math.max(1, newSolWithTask.cost - prevCost) * bidGainFactor;
 		return (long) Math.round(bid);
 	}
 
