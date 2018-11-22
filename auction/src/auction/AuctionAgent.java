@@ -89,7 +89,10 @@ public class AuctionAgent implements AuctionBehavior {
 	@Override
 	public void auctionResult(Task previous, int winner, Long[] bids) {
 		Long oppBid = bids[(agent.id() == 0) ? 1 : 0];
-		System.out.println("We predicted" + oppComputedBid + ", Opponent played" + oppBid);
+		if (tryToPredictOpponent) {
+			System.out.println("We predicted " + oppComputedBid + ", Opponent played " + oppBid);
+		}
+		
 		boolean addedCityOpponent = false;
 		
 		if (opponentTasks.size() == 1 && oppStartCities.size() < nbrVehicles) {  // we will try to refine our estimation of the opponent base city
@@ -122,8 +125,8 @@ public class AuctionAgent implements AuctionBehavior {
 			}
 		}
 		
-		if (oppComputedBid != 0 && !addedCityOpponent) { // if we tried to compute a bid and if our bid wasn't wrong because it came 
-			// from a city we hadn't previously encountered
+		if (tryToPredictOpponent && oppComputedBid != 0 && !addedCityOpponent) { // if we tried to compute a bid and if our bid wasn't 
+			// wrong because it came from a city we hadn't previously encountered
 			if (Math.abs(oppComputedBid - oppBid) > 500) { // in that case, our city estimation is probably wrong and we should drop it
 				tryToPredictOpponent = false;
 				System.out.println("We won't try to predict his moves anymore");
@@ -184,6 +187,7 @@ public class AuctionAgent implements AuctionBehavior {
 		}
 		return (long) Math.round(bid);
 	}
+	
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
