@@ -29,6 +29,7 @@ public class AuctionAgent2 implements AuctionBehavior {
 
 	private TaskDistribution distribution;
 	private ArrayList<Task> tasks;
+	private ArrayList<Task> tasks_lost;
 	private Agent agent;
 	private MarginalLossComputer mlc;
 	private Solution prevSol;
@@ -87,6 +88,7 @@ public class AuctionAgent2 implements AuctionBehavior {
 		} else {
 			this.tasks.remove(tasks.size()-1);  // we remove the task from our 
 			// task set since we will not deliver it
+			tasks_lost.add(previous);
 		}
 	}
 	
@@ -108,6 +110,14 @@ public class AuctionAgent2 implements AuctionBehavior {
 		// TODO; si on a un cout < 0, on peut suremnt le mettre à 0 comme c'est task specific
 
 		double bid = newSolWithTask.cost - prevCost;
+		
+		double est_opponent = lengthNewLinks(tasks_lost, task);
+		
+		if (bid <= est_opponent) {
+			bid = est_opponent*0.95;
+		}
+		
+		
 		return (long) Math.round(bid);
 	}
 	
