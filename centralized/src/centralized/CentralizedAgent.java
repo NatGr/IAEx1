@@ -140,11 +140,9 @@ public class CentralizedAgent implements CentralizedBehavior {
         	if (solution.cost < bestCurrentSolution.cost) {
         		bestCurrentSolution = solution;
         		haventMadeProgressSince = 0;
+        		restartPoints.add(solution);
         	} else {
         		haventMadeProgressSince++;
-        		if (restartPoints.size() < restartPointsMaxSize && generator.nextDouble() < 0.05) {
-        			restartPoints.add(solution);
-        		}
         	}
         	
         	if (haventMadeProgressSince > iterThreshold) {
@@ -192,29 +190,13 @@ public class CentralizedAgent implements CentralizedBehavior {
 		Random generator = new Random();
 		Solution newSol, bestCurrentSolution = solution, bestNeighborhoodSol;
 		double temperature = temperatureInit, diffScore;
-		long startTime = System.currentTimeMillis(), deltaTime;
-		
-		ArrayList<Solution> neighbourgs = solution.generateNeighbours();
-		if (neighbourgs.size() > 0) {
-			bestNeighborhoodSol = Collections.min(neighbourgs);
-			if (bestNeighborhoodSol.cost < bestCurrentSolution.cost) {
-	    		bestCurrentSolution = bestNeighborhoodSol;
-	    	}
-			newSol = neighbourgs.get(generator.nextInt(neighbourgs.size()));  // pick random solution
-			diffScore = newSol.cost - solution.cost;
-	        if (diffScore < 0) {
-	            solution = newSol;
-	        } else if (generator.nextDouble() < Math.exp(- diffScore / temperature)) { // accept with a probability that decreases with the temperature
-	            // and that is smaller the worse the new solution is
-	            solution = newSol;
-	        }
-		}
-		
-		deltaTime = timeLimit - startTime;
+		long startTime = System.currentTimeMillis(), deltaTime = timeLimit - startTime;
+		ArrayList<Solution> neighbourgs;
+
 				
 		for (double currentTime = System.currentTimeMillis(), fractionTimeLeft; currentTime < timeLimit; currentTime = System.currentTimeMillis()) {
 			fractionTimeLeft = (timeLimit - currentTime) / deltaTime;
-			temperature = temperatureInit * fractionTimeLeft + temperatureEnd * (1-fractionTimeLeft); // update the temperature 
+			temperature = temperatureInit * fractionTimeLeft + temperatureEnd * (1-fractionTimeLeft); // update the temperature
 					
 			neighbourgs = solution.generateNeighbours();
 			if (neighbourgs.size() == 0) {  // possible if very restrictive constraints

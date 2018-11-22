@@ -24,7 +24,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 	private Random generator;
 	private double pChangeVehicle = 0.05, pChangeOrder = 0.95; /* probabilities to chose the neighbourgh from the first or second way of generating
 	a neighbourgh, the probability to be in appendchangingTaskOrderToN is of pChangeOrder-pChangeVehicle */
-	private double pPickingEarly = 0.15, pPickingLate = 0.5, pDeliveringEarly = 0.85; // same as above but for the subtypes of newSolutions from appendchangingTaskOrderToN
+	private double pPickingEarly = 0.25, pPickingLate = 0.5, pDeliveringEarly = 0.75; // same as above but for the subtypes of newSolutions from appendchangingTaskOrderToN
 	private int[] nbrTasksVehicles; // number of tasks for each vehicle
 
 	// solution characteristics:

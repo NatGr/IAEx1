@@ -22,7 +22,6 @@ import logist.topology.Topology;
  */
 public class AuctionDummy implements AuctionBehavior {
 
-	private TaskDistribution distribution;
 	private ArrayList<Task> tasks;
 	private Agent agent;
 	private MarginalLossComputer mlc;
@@ -33,13 +32,12 @@ public class AuctionDummy implements AuctionBehavior {
 	private int maxVehicleCapacity = 0;
 	private List<Long[]> bidHistory;  // List of array containing the history of the bids
 	// our bids are put at the first position
-	private double bidGainFactor = 1.45;
+	private long bidGain = 750;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
 			Agent agent) {
 
-		this.distribution = distribution;
 		this.tasks = new ArrayList<Task>();
 		this.agent = agent;
 		this.mlc = new MarginalLossComputer(agent);
@@ -64,8 +62,8 @@ public class AuctionDummy implements AuctionBehavior {
         this.planTimeLimit = ls.get(LogistSettings.TimeoutKey.PLAN);
         // the bid method cannot execute more than bidTimeLimit milliseconds
         this.bidTimeLimit = ls.get(LogistSettings.TimeoutKey.BID);
-        
-        System.out.println("Dummy agent always wants a gain factor of " + bidGainFactor);
+
+        System.out.println("Auction dummy always wants a gain " + bidGain);
 	}
 
 	@Override
@@ -92,24 +90,28 @@ public class AuctionDummy implements AuctionBehavior {
 		double prevCost = (prevSol == null) ? 0 : prevSol.cost;
 		
 		this.tasks.add(task);  // we add it no matter what and will remove it if we don't get the task
-		long timeOut = System.currentTimeMillis() + (long) (0.999*bidTimeLimit) - 5;
+		long timeOut = System.currentTimeMillis() + bidTimeLimit - 20;
 		// 0.999 for safety + 5ms for the rest of the method
-		this.newSolWithTask = mlc.getSolution(this.tasks, timeOut);
+		this.newSolWithTask = mlc.getSolution(this.tasks, timeOut, true);
+		
+		// TODO: add time adaptability
+		// TODO: add adaptation to ennemy
+		// TODO; si on a un cout < 0, on peut suremnt le mettre à 0 comme c'est task specific
 
-		double bid = Math.max(1, newSolWithTask.cost - prevCost) * bidGainFactor;
+		double bid = Math.max(1, newSolWithTask.cost - prevCost) + bidGain;
 		return (long) Math.round(bid);
 	}
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
-		long timeOut = System.currentTimeMillis() + (long) (0.999*planTimeLimit) - 25;
+		long timeOut = System.currentTimeMillis() + planTimeLimit - 40;
 		// 0.999 for safety + 25ms for the plan computing
 		
 		ArrayList<Task> list = new ArrayList<Task>();
         for (Task task: tasks) {
         	list.add(task);
         }
-		Solution newSol = mlc.getSolution(list, timeOut);
+		Solution newSol = mlc.getSolution(list, timeOut, true);
 		return newSol.getPlans(list);
 	}
 }
