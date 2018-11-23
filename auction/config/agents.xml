@@ -6,7 +6,7 @@
 	<!-- #### AUCTION AGENTS ### -->
 	<agent name="auction-main-17">
 		<set class-path="bin/"/>
-		<set class-name="auction.AuctionAgent"/>
+		<set class-name="auction.AuctionAgentFutureCost"/>
 		
 		<set search-algorithm="SimulatedAnnealing" />
 		<set temperature-begin="1000."/>
