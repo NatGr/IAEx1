@@ -38,10 +38,11 @@ public class Solution implements Cloneable, Comparable<Solution> {
 	 * there are tasks that no vehicle is able to carry, the problem is unsolvable
 	 * and we throw an IllegalArgumentException
 	 */	
-	public Solution(int[] tasksWeights, City[] TaksPickupCity, City[] TaskDeliverCity, City[] vHomeCity, int[] vCapacity, int[] vCostPerKm) throws IllegalArgumentException {
+	public Solution(ArrayList<Integer> tasksWeights, ArrayList<City> TaksPickupCity, ArrayList<City> TaskDeliverCity,
+			City[] vHomeCity, int[] vCapacity, int[] vCostPerKm) throws IllegalArgumentException {
 		//Initialization		
 		nbrVehicles = vHomeCity.length;
-		nbrTasks = 2 * tasksWeights.length;
+		nbrTasks = 2 * tasksWeights.size();
 		weight = new int[nbrTasks];
 		city = new City[nbrTasks + nbrVehicles];
 		vehicleCapacity = vCapacity;
@@ -59,15 +60,15 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		}
 
 		//Task specific initialization
-		for (int i = 0, pickup = 0, deliver = 1; i < tasksWeights.length; i++, pickup += 2, deliver += 2) {
-			weight[pickup] = tasksWeights[i];
+		for (int i = 0, pickup = 0, deliver = 1; i < tasksWeights.size(); i++, pickup += 2, deliver += 2) {
+			weight[pickup] = tasksWeights.get(i);
 			if (weight[pickup] > maxCapacity) {
 				throw new IllegalArgumentException(
 						"One of the tasks has a weight that is too big for any vehicle, the problem is unsolvable.");
 			}
 			weight[deliver] = -weight[pickup]; // delivering a task is equivalent to taking a task of negtaive capacity
-			city[pickup] = TaksPickupCity[i];
-			city[deliver] = TaskDeliverCity[i];
+			city[pickup] = TaksPickupCity.get(i);
+			city[deliver] = TaskDeliverCity.get(i);
 		}
 
 		/* 
@@ -81,7 +82,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		}
 
 		List<Integer> permutation = new ArrayList<Integer>(); // random ordering of the tasks
-		for (int i = 0; i < tasksWeights.length; i++) {
+		for (int i = 0; i < tasksWeights.size(); i++) {
 			permutation.add(i);
 		}
 		Collections.shuffle(permutation, generator);
@@ -89,7 +90,7 @@ public class Solution implements Cloneable, Comparable<Solution> {
 		for (int i : permutation) {
 			do {
 				int vehicle = generator.nextInt(nbrVehicles);
-				if (vehicleCapacity[vehicle] >= tasksWeights[i]) {
+				if (vehicleCapacity[vehicle] >= tasksWeights.get(i)) {
 					nextTask[nextTaskVehicle[vehicle]] = 2 * i; // pickup task i
 					nextTask[2 * i] = 2 * i + 1; // delivering task i
 					nextTaskVehicle[vehicle] = 2 * i + 1;

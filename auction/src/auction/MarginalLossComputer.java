@@ -71,15 +71,15 @@ public class MarginalLossComputer {
      * agent oterwise we do it for the opponent
      */
     public Solution getSolution(ArrayList<Task> tasks, long timeLimit, boolean forOurAgent) {
-    	int[] tasksWeights = new int[tasks.size()];
-    	City[] TaksPickupCity = new City[tasks.size()];
-    	City[] TaskDeliverCity = new City[tasks.size()];
+    	ArrayList<Integer> tasksWeights = new ArrayList<Integer>(tasks.size());
+    	ArrayList<City> TaksPickupCity = new ArrayList<City>(tasks.size());
+    	ArrayList<City> TaskDeliverCity = new ArrayList<City>(tasks.size());
     	
     	for (int i=0; i < tasks.size(); i++) {
     		Task task = tasks.get(i);
-    		tasksWeights[i] = task.weight;
-    		TaksPickupCity[i] = task.pickupCity;
-    		TaskDeliverCity[i] = task.deliveryCity;
+    		tasksWeights.add(task.weight);
+    		TaksPickupCity.add(task.pickupCity);
+    		TaskDeliverCity.add(task.deliveryCity);
     	}
     	
     	return getSolution(tasksWeights, TaksPickupCity, TaskDeliverCity, timeLimit, forOurAgent);
@@ -88,15 +88,15 @@ public class MarginalLossComputer {
     /*
      * same function as above but works with non tasks arguments so because we can't create tasks trough the logist API
      */
-    public Solution getSolution(int[] tasksWeights, City[] TaksPickupCity, City[] TaskDeliverCity, long timeLimit, boolean forOurAgent) {
+    public Solution getSolution(ArrayList<Integer> tasksWeights, ArrayList<City> TaksPickupCity,
+    		ArrayList<City> TaskDeliverCity, long timeLimit, boolean forOurAgent) {
     	Solution solution;
     	if (forOurAgent) {
     		solution = new Solution(tasksWeights, TaksPickupCity, TaskDeliverCity, homeCity, capacity, costPerKm);
     	} else {
     		solution = new Solution(tasksWeights, TaksPickupCity, TaskDeliverCity, oppHomeCity, oppCapacity, oppCostPerKm);
     	}
-        
-        if (tasksWeights.length == 0) { // no search to perfom
+        if (tasksWeights.size() == 0) { // no search to perfom
         	return solution;
         }
         

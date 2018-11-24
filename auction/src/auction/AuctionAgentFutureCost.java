@@ -33,10 +33,11 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
 	private long bidTimeLimit;
 	private int maxVehicleCapacity = 0;
 	private int nbrArtificialTasks = 5;
+	private boolean madeTransitionArtificialTasks = false;
 	private ArrayList<Integer> artificalTasksWeights;
 	private ArrayList<City> artificalTasksPickupCities;
 	private ArrayList<City> artificalTasksDeliverCities;
-	private long bidGain = 750;
+	private long bidGain = 350;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
@@ -70,7 +71,6 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
         // the bid method cannot execute more than bidTimeLimit milliseconds
         this.bidTimeLimit = ls.get(LogistSettings.TimeoutKey.BID);
         long setupTimeLimit = ls.get(LogistSettings.TimeoutKey.SETUP);
-        System.out.println("The rest of the settings method took:" + (System.currentTimeMillis() - start));
         
         
         // Compute the nbrArtificialTasks most probable tasks
@@ -83,7 +83,6 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
         
         for (int i=0; i<nbrArtificialTasks; i++) {
         	TaskProba tp = pq.poll();
-        	System.out.println(tp.proba);
         	artificalTasksWeights.add(tp.weight);
         	artificalTasksPickupCities.add(tp.pickupCity);
         	artificalTasksDeliverCities.add(tp.deliveryCity);
@@ -91,16 +90,22 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
        
         if (setupTimeLimit > bidTimeLimit/2) { // in that case, we compute the cost of the 
         	// solution with only the first tasks here, otherwise we will compute it in the askPrice method
-        	prevSol = mlc.getSolution(this.tasks, start + setupTimeLimit - 50, true);
+        	prevSol = mlc.getSolution(artificalTasksWeights, artificalTasksPickupCities,
+        			artificalTasksDeliverCities, start + setupTimeLimit - 50, true);
         }
 	}
 
 	@Override
 	public void auctionResult(Task previous, int winner, Long[] bids) {
 		if (winner == agent.id()) {
-			this.prevSol = this.newSolWithTask;
+			prevSol = newSolWithTask;
 		} else {
-			this.tasks.remove(tasks.size()-1);  // we remove the task from our 
+			if (tasks.size() <= nbrArtificialTasks / 2) {
+				artificalTasksWeights.remove(artificalTasksWeights.size()-1);
+				artificalTasksPickupCities.remove(artificalTasksPickupCities.size()-1);
+				artificalTasksDeliverCities.remove(artificalTasksDeliverCities.size()-1);
+			}
+			tasks.remove(tasks.size()-1);  // we remove the task from our 
 			// task set since we will not deliver it
 		}
 	}
@@ -112,18 +117,29 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
 		}
 		long timeOut = System.currentTimeMillis() + bidTimeLimit - 35;
 		
-		double prevCost;
 		if (prevSol == null) {
-			//prevCost = mlc.getSolution(this.tasks, timeOut, true); TODO
-			prevCost = 0;
-		} else {
-			prevCost = prevSol.cost;
+			long timeOutPrevSol = timeOut - bidTimeLimit/2;
+			prevSol = mlc.getSolution(artificalTasksWeights, artificalTasksPickupCities, artificalTasksDeliverCities, timeOutPrevSol, true);
+		} else if (!madeTransitionArtificialTasks && tasks.size() == nbrArtificialTasks / 2 ) { // in that case, we go from using 
+			// the artificial tasks to not using them
+			long timeOutPrevSol = timeOut - bidTimeLimit/2;
+			prevSol = mlc.getSolution(tasks, timeOutPrevSol, true);
+			madeTransitionArtificialTasks = true;
 		}
-		
-		this.tasks.add(task);  // we add it no matter what and will remove it if we don't get the task
-		this.newSolWithTask = mlc.getSolution(this.tasks, timeOut, true);
+				
+		tasks.add(task); // we add it no matter what and will remove it if we don't get the task
+		if (tasks.size() <= nbrArtificialTasks / 2) { // equal since we added one to the task size right before
+			artificalTasksWeights.add(task.weight);
+			artificalTasksPickupCities.add(task.pickupCity);
+			artificalTasksDeliverCities.add(task.deliveryCity);
+			newSolWithTask = mlc.getSolution(artificalTasksWeights, artificalTasksPickupCities, artificalTasksDeliverCities, timeOut, true);
+		} else {
+			newSolWithTask = mlc.getSolution(tasks, timeOut, true);
+		}
 
-		double bid = Math.max(1, newSolWithTask.cost - prevCost) + bidGain;
+		System.out.println(newSolWithTask.cost);
+		System.out.println(prevSol.cost);
+		double bid = Math.max(1, newSolWithTask.cost - prevSol.cost) + bidGain;
 		return (long) Math.round(bid);
 	}
 
