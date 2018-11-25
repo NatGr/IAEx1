@@ -32,12 +32,20 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
 	private long planTimeLimit;
 	private long bidTimeLimit;
 	private int maxVehicleCapacity = 0;
-	private int nbrArtificialTasks = 5;
+	private int nbrArtificialTasks = 5;  // artificial tasks are tasks that are likely to occur that we use in the beginning of the
+	// auction to compute our marginal costs
+	private int artificialTasksUsageLimit = 3;  // we will stop using artificial tasks once we have artificialTasksUsageLimit tasks
 	private boolean madeTransitionArtificialTasks = false;
 	private ArrayList<Integer> artificalTasksWeights;
 	private ArrayList<City> artificalTasksPickupCities;
 	private ArrayList<City> artificalTasksDeliverCities;
 	private long bidGain = 350;
+	private long minBidGain = 0;  // once we stopped using ArtificialTasks, we will make the bid gain addapt to the difference between our
+	// bid and the opponent's while staying in these bounds
+	private long maxBidGain = 1000;
+	private double updateFactorUp = 0.6; // update factor we use when increasing the bidGain
+	private double updateFactorDown = 0.9; // bigger than updateFactorUp because loosing a task to the opponent out of greed is much worse than
+	// not making that much profit by delivering it
 
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
@@ -100,13 +108,33 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
 		if (winner == agent.id()) {
 			prevSol = newSolWithTask;
 		} else {
-			if (tasks.size() <= nbrArtificialTasks / 2) {
+			if (tasks.size() <= artificialTasksUsageLimit) {
 				artificalTasksWeights.remove(artificalTasksWeights.size()-1);
 				artificalTasksPickupCities.remove(artificalTasksPickupCities.size()-1);
 				artificalTasksDeliverCities.remove(artificalTasksDeliverCities.size()-1);
 			}
 			tasks.remove(tasks.size()-1);  // we remove the task from our 
 			// task set since we will not deliver it
+		}
+		
+		// we adapt the bid gain
+		if (tasks.size() > artificialTasksUsageLimit) {  // we don't do it on the transition to not using art. tasks
+			Long oppBid, ourBid;
+			if (agent.id() == 0) {
+				oppBid = bids[1];
+				ourBid = bids[0];
+			} else {
+				oppBid = bids[0];
+				ourBid = bids[1];
+			}
+			
+			if (oppBid == null) {
+				oppBid = ourBid + maxBidGain - bidGain; // if he bid null, we assume he bid a lot and we should increase our bid
+			}
+			
+			double updateFactor = (ourBid > oppBid) ? updateFactorDown : updateFactorUp;
+			bidGain += (long) (updateFactor*(oppBid - ourBid));
+			bidGain = Math.min(Math.max(bidGain, minBidGain), maxBidGain); // we assure ourselves to stay in the boundaries
 		}
 	}
 	
@@ -120,7 +148,7 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
 		if (prevSol == null) {
 			long timeOutPrevSol = timeOut - bidTimeLimit/2;
 			prevSol = mlc.getSolution(artificalTasksWeights, artificalTasksPickupCities, artificalTasksDeliverCities, timeOutPrevSol, true);
-		} else if (!madeTransitionArtificialTasks && tasks.size() == nbrArtificialTasks / 2 ) { // in that case, we go from using 
+		} else if (!madeTransitionArtificialTasks && tasks.size() == artificialTasksUsageLimit ) { // in that case, we go from using 
 			// the artificial tasks to not using them
 			long timeOutPrevSol = timeOut - bidTimeLimit/2;
 			prevSol = mlc.getSolution(tasks, timeOutPrevSol, true);
@@ -128,7 +156,7 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
 		}
 				
 		tasks.add(task); // we add it no matter what and will remove it if we don't get the task
-		if (tasks.size() <= nbrArtificialTasks / 2) { // equal since we added one to the task size right before
+		if (tasks.size() <= artificialTasksUsageLimit) { // equal since we added one to the task size right before
 			artificalTasksWeights.add(task.weight);
 			artificalTasksPickupCities.add(task.pickupCity);
 			artificalTasksDeliverCities.add(task.deliveryCity);
@@ -137,9 +165,8 @@ public class AuctionAgentFutureCost implements AuctionBehavior {
 			newSolWithTask = mlc.getSolution(tasks, timeOut, true);
 		}
 
-		System.out.println(newSolWithTask.cost);
-		System.out.println(prevSol.cost);
-		double bid = Math.max(1, newSolWithTask.cost - prevSol.cost) + bidGain;
+		double bid = Math.max(1, newSolWithTask.cost - prevSol.cost) + bidGain; // if prevSol.cost > newSolWithTask.cost, the cost is negative because
+		// the stochastic search did not find a goos solution and we should not use that to compute the bid
 		return (long) Math.round(bid);
 	}
 

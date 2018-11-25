@@ -172,7 +172,7 @@ public class AuctionAgent implements AuctionBehavior {
 			oppComputedBid = Math.max(1, newOppSolWithTask.cost - prevOppCost + ennemyPredictedGain);
 			
 			if ((oppComputedBid < dummyBid) && (oppComputedBid > dummyBid - 1000)) {
-				bid = oppComputedBid + 150;
+				bid = oppComputedBid - 150;
 			} else {
 				bid = dummyBid;
 			}
